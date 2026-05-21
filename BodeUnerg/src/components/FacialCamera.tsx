@@ -121,9 +121,14 @@ export default function FacialCamera({ onVerified, onCancel, lightTheme = false 
           ref={videoRef}
           autoPlay playsInline muted
           style={{
-            width: '100%', height: '100%',
-            objectFit: 'cover',
-            transform: 'scaleX(-1)',
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            minWidth: '100%',
+            minHeight: '100%',
+            width: 'auto',
+            height: 'auto',
+            transform: 'translate(-50%, -50%) scaleX(-1)',
             display: isRunning ? 'block' : 'none',
           }}
         />
@@ -132,9 +137,14 @@ export default function FacialCamera({ onVerified, onCancel, lightTheme = false 
         <canvas
           ref={canvasRef}
           style={{
-            position: 'absolute', inset: 0,
-            width: '100%', height: '100%',
-            transform: 'scaleX(-1)',
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            minWidth: '100%',
+            minHeight: '100%',
+            width: 'auto',
+            height: 'auto',
+            transform: 'translate(-50%, -50%) scaleX(-1)',
             pointerEvents: 'none',
           }}
         />

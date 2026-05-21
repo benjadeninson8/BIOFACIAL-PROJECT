@@ -34,6 +34,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
   const loopRef    = useRef<number | null>(null)
   const faceApiRef = useRef<typeof import('face-api.js') | null>(null)
   const detectedFrames = useRef(0)
+  const hasVerifiedRef = useRef(false)
 
   const [status,          setStatus]          = useState<FaceStatus>('idle')
   const [error,           setError]           = useState<string | null>(null)
@@ -65,12 +66,15 @@ export function useFaceDetection(): UseFaceDetectionReturn {
 
   /* ── Detection loop ── */
   const runLoop = useCallback(async () => {
+    if (hasVerifiedRef.current) return
     const faceapi = faceApiRef.current
     const video   = videoRef.current
     const canvas  = canvasRef.current
 
     if (!video || video.readyState < 2) {
-      loopRef.current = requestAnimationFrame(runLoop)
+      if (!hasVerifiedRef.current) {
+        loopRef.current = requestAnimationFrame(runLoop)
+      }
       return
     }
 
@@ -79,6 +83,8 @@ export function useFaceDetection(): UseFaceDetectionReturn {
         const displaySize = { width: video.videoWidth, height: video.videoHeight }
         if (canvas.width !== displaySize.width || canvas.height !== displaySize.height) {
           faceapi.matchDimensions(canvas, displaySize)
+          canvas.style.removeProperty('width')
+          canvas.style.removeProperty('height')
         }
 
         const isLastStep = (detectedFrames.current + 1) >= FRAMES_TO_VERIFY
@@ -127,6 +133,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
             setConfidence(pct)
 
             if (pct >= 100 && resized[0].descriptor) {
+              hasVerifiedRef.current = true
               setStatus('verified')
               const desc = Array.from(resized[0].descriptor) as number[]
               setFaceDescriptor(desc)
@@ -177,7 +184,9 @@ export function useFaceDetection(): UseFaceDetectionReturn {
       } catch { /* skip frame */ }
     }
 
-    loopRef.current = requestAnimationFrame(runLoop)
+    if (!hasVerifiedRef.current) {
+      loopRef.current = requestAnimationFrame(runLoop)
+    }
   }, [])
 
   /* ── Start camera ── */
@@ -187,6 +196,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
     detectedFrames.current = 0
     setConfidence(0)
     setFaceDescriptor(null)
+    hasVerifiedRef.current = false
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -225,6 +235,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
     setConfidence(0)
     setFaceDescriptor(null)
     detectedFrames.current = 0
+    hasVerifiedRef.current = false
   }, [])
 
   useEffect(() => () => stopCamera(), [stopCamera])
