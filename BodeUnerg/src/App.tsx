@@ -78,16 +78,7 @@ export default function App() {
   const [showRegisterQR, setShowRegisterQR] = useState(false)
   const [mobileTab, setMobileTab] = useState<'shelf' | 'cart'>('shelf')
   const [activeCategory, setActiveCategory] = useState('Todos')
-  const [localIp, setLocalIp] = useState('localhost')
-
-  useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL || ''}/api/ip`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.ip) setLocalIp(data.ip)
-      })
-      .catch(err => console.error('Error al obtener la IP local:', err))
-  }, [])
+  const registerUrl = import.meta.env.VITE_REGISTER_URL || 'https://bankunerg1.netlify.app'
 
   const updateQty = useCallback((id: number, delta: number) => {
     setProducts(prev =>
@@ -646,7 +637,7 @@ export default function App() {
           <div className="flex-1 flex flex-col items-center justify-center px-6 text-center gap-6">
             <div className="bg-white rounded-3xl p-6 shadow-xl border border-emerald-100/50 flex flex-col items-center gap-2">
               <QRCodeSVG
-                value={`https://${localIp}:5173`}
+                value={registerUrl}
                 size={220}
                 bgColor="#ffffff"
                 fgColor="#065f46"
@@ -654,16 +645,16 @@ export default function App() {
                 includeMargin
               />
               <span className="font-mono text-emerald-800 text-xs font-semibold bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
-                https://{localIp}:5173
+                {registerUrl}
               </span>
             </div>
 
             <div className="max-w-md flex flex-col gap-2">
               <h3 className="font-display font-bold text-lg text-gray-950">Escanea para iniciar el KYC</h3>
               <p className="text-gray-500 text-sm leading-relaxed">
-                1. Asegúrate de estar conectado al **Punto de acceso móvil (Wi-Fi)** de esta laptop.<br />
-                2. Escanea este código QR con la cámara de tu celular para abrir el portal de registro.<br />
-                3. Completa tus datos y captura tu rostro.
+                1. Asegúrate de que tu celular tenga acceso a Internet (datos móviles o Wi-Fi).<br />
+                2. Escanea este código QR con la cámara de tu celular para abrir el portal de registro en la nube.<br />
+                3. Completa tus datos y realiza la captura biométrica de tu rostro.
               </p>
             </div>
           </div>

@@ -1,14 +1,17 @@
 import express from 'express';
 import cors from 'cors';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import os from 'os';
 import { MongoClient } from 'mongodb';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const DB_PATH = path.join(__dirname, 'db.json');
+// Ensure MONGODB_URI is provided
+const MONGODB_URI = process.env.MONGODB_URI;
+if (!MONGODB_URI) {
+  console.error('\n==================================================');
+  console.error('  [BioFacial] ERROR CRÍTICO: MONGODB_URI no está definida.');
+  console.error('  Esta aplicación ahora funciona exclusivamente en la nube.');
+  console.error('  Por favor, configura la variable MONGODB_URI.');
+  console.error('==================================================\n');
+  process.exit(1);
+}
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -16,104 +19,51 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); // Allow larger payloads for descriptors
 
-// Logger middleware to track incoming requests
+// Logger middleware to track incoming requests in real-time
 app.use((req, res, next) => {
   console.log(`[BioFacial] [${new Date().toLocaleTimeString()}] ${req.method} ${req.url}`);
   next();
 });
 
 // MongoDB Connection Setup
-const MONGODB_URI = process.env.MONGODB_URI;
+console.log('[BioFacial] Conectando a MongoDB Atlas...');
 let dbClient = null;
 let usersCollection = null;
 
-if (MONGODB_URI) {
-  console.log('[BioFacial] Detectada variable MONGODB_URI. Conectando a MongoDB Atlas...');
-  MongoClient.connect(MONGODB_URI)
-    .then(client => {
-      dbClient = client;
-      const dbName = MONGODB_URI.split('/').pop()?.split('?')[0] || 'biofacial';
-      usersCollection = client.db(dbName).collection('users');
-      console.log(`[BioFacial] Conectado exitosamente a MongoDB, Base de Datos: ${dbName}`);
-    })
-    .catch(err => {
-      console.error('[BioFacial] Error al conectar a MongoDB:', err);
-    });
-} else {
-  console.log('[BioFacial] No se detectó MONGODB_URI. Usando base de datos local db.json');
+try {
+  dbClient = await MongoClient.connect(MONGODB_URI);
+  const dbName = MONGODB_URI.split('/').pop()?.split('?')[0] || 'biofacial';
+  usersCollection = dbClient.db(dbName).collection('users');
+  console.log(`[BioFacial] Conectado exitosamente a MongoDB, Base de Datos: ${dbName}`);
+} catch (err) {
+  console.error('[BioFacial] Error fatal al conectar a MongoDB Atlas:', err);
+  process.exit(1);
 }
 
-// Helper to read local database (Fallback)
-function readDb() {
-  try {
-    if (!fs.existsSync(DB_PATH)) {
-      fs.writeFileSync(DB_PATH, JSON.stringify([]));
-      return [];
-    }
-    const data = fs.readFileSync(DB_PATH, 'utf-8');
-    return JSON.parse(data || '[]');
-  } catch (error) {
-    console.error('Error reading database file:', error);
-    return [];
-  }
-}
-
-// Helper to write local database (Fallback)
-function writeDb(data) {
-  try {
-    fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
-  } catch (error) {
-    console.error('Error writing to database file:', error);
-  }
-}
-
-// Abstract DB Helpers supporting both MongoDB and local db.json
+// Database Helpers interacting only with MongoDB Atlas
 async function getUsersList() {
-  if (usersCollection) {
-    return await usersCollection.find({}).toArray();
-  }
-  return readDb();
+  if (!usersCollection) throw new Error('Base de datos no inicializada.');
+  return await usersCollection.find({}).toArray();
 }
 
 async function saveUser(user) {
-  if (usersCollection) {
-    await usersCollection.replaceOne(
-      { $or: [{ id: user.id }, { cedula: user.cedula }] },
-      user,
-      { upsert: true }
-    );
-  } else {
-    const users = readDb();
-    const existingIndex = users.findIndex(u => u.cedula === user.cedula || u.id === user.id);
-    if (existingIndex !== -1) {
-      users[existingIndex] = user;
-    } else {
-      users.push(user);
-    }
-    writeDb(users);
-  }
+  if (!usersCollection) throw new Error('Base de datos no inicializada.');
+  await usersCollection.replaceOne(
+    { $or: [{ id: user.id }, { cedula: user.cedula }] },
+    user,
+    { upsert: true }
+  );
 }
 
 async function deleteUser(id) {
-  if (usersCollection) {
-    const result = await usersCollection.deleteOne({ id });
-    return result.deletedCount > 0;
-  } else {
-    let users = readDb();
-    const initialLength = users.length;
-    users = users.filter(u => u.id !== id);
-    if (users.length === initialLength) return false;
-    writeDb(users);
-    return true;
-  }
+  if (!usersCollection) throw new Error('Base de datos no inicializada.');
+  const result = await usersCollection.deleteOne({ id });
+  return result.deletedCount > 0;
 }
 
 async function clearDatabase() {
-  if (usersCollection) {
-    await usersCollection.deleteMany({});
-  } else {
-    writeDb([]);
-  }
+  if (!usersCollection) throw new Error('Base de datos no inicializada.');
+  await usersCollection.deleteMany({});
 }
 
 // Helper to compute Euclidean Distance
@@ -127,37 +77,10 @@ function getEuclideanDistance(a, b) {
   return Math.sqrt(sum);
 }
 
-// Get local IP of the machine hosting the backend
-app.get('/api/ip', (req, res) => {
-  const nets = os.networkInterfaces();
-  let localIp = 'localhost';
-  
-  const keys = Object.keys(nets);
-  const wifiKey = keys.find(k => k.toLowerCase().includes('wi-fi') || k.toLowerCase().includes('wireless') || k.toLowerCase().includes('inalambrica') || k.toLowerCase().includes('wi fi'));
-  
-  if (wifiKey) {
-    const net = nets[wifiKey].find(n => n.family === 'IPv4' && !n.internal);
-    if (net) localIp = net.address;
-  }
-  
-  if (localIp === 'localhost') {
-    for (const name of keys) {
-      const net = nets[name].find(n => n.family === 'IPv4' && !n.internal && !n.address.startsWith('169.254'));
-      if (net) {
-        localIp = net.address;
-        break;
-      }
-    }
-  }
-  
-  res.json({ ip: localIp });
-});
-
 // Get all users (useful for debugging)
 app.get('/api/users', async (req, res) => {
   try {
     const users = await getUsersList();
-    // Map to exclude descriptor for cleaner listing if requested, or return all
     const cleanUsers = users.map(({ descriptor, ...rest }) => rest);
     res.json({ success: true, count: users.length, users: cleanUsers });
   } catch (error) {
@@ -218,7 +141,6 @@ app.post('/api/users/verify', async (req, res) => {
     let bestMatch = null;
     let minDistance = Infinity;
 
-    // Compare input descriptor against all registered users
     for (const user of users) {
       const dist = getEuclideanDistance(descriptor, user.descriptor);
       if (dist < minDistance) {
@@ -227,9 +149,8 @@ app.post('/api/users/verify', async (req, res) => {
       }
     }
 
-    console.log(`[BioFacial] Comparación - Distancia mínima encontrada: ${minDistance.toFixed(4)} contra ${bestMatch ? bestMatch.nombres : 'ninguno'}`);
+    console.log(`[BioFacial] Comparación - Distancia mínima: ${minDistance.toFixed(4)} contra ${bestMatch ? bestMatch.nombres : 'ninguno'}`);
 
-    // Threshold of 0.6 is typical for face recognition with face-api.js descriptor
     if (minDistance < threshold && bestMatch) {
       const { descriptor, ...userWithoutDescriptor } = bestMatch;
       return res.json({
@@ -282,8 +203,9 @@ app.post('/api/clear', async (req, res) => {
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`==================================================`);
-  console.log(`  BioFacial Backend (HTTP) escuchando en puerto ${PORT}`);
-  console.log(`  Endpoints:`);
+  console.log(`  BioFacial Backend (Nube - MongoDB Atlas)`);
+  console.log(`  Escuchando en el puerto: ${PORT}`);
+  console.log(`  Endpoints activos:`);
   console.log(`    - GET  /api/users`);
   console.log(`    - POST /api/users/register`);
   console.log(`    - POST /api/users/verify`);
