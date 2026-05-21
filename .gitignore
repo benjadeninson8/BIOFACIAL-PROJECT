@@ -5,6 +5,8 @@ node_modules/
 # Production builds
 dist/
 **/dist/
+build/
+**/build/
 
 # Local databases
 backend/db.json
@@ -22,6 +24,10 @@ backend/cert.pem
 .env.test.local
 .env.production.local
 .env.*
+
+# Firebase cache
+.firebase/
+**/.firebase/
 
 # OS files
 .DS_Store

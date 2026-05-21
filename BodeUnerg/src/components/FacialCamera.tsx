@@ -1,18 +1,18 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Scan, Loader2, X, CheckCircle, AlertCircle } from 'lucide-react'
 import { useFaceDetection, type FaceStatus } from '../hooks/useFaceDetection'
 
 const STATUS_INFO: Record<FaceStatus, { text: string; color: string; dot: string }> = {
-  idle:            { text: 'Listo',                           color: 'text-gray-500',   dot: 'bg-gray-400'   },
-  loading_models:  { text: 'Cargando modelos IA...',          color: 'text-blue-600',   dot: 'bg-blue-500'   },
-  starting_camera: { text: 'Iniciando cámara...',             color: 'text-blue-600',   dot: 'bg-blue-500'   },
-  no_face:         { text: 'Coloca tu rostro en el marco',    color: 'text-amber-600',  dot: 'bg-amber-500'  },
-  multiple:        { text: 'Solo un rostro por favor',        color: 'text-red-500',    dot: 'bg-red-500'    },
-  detected:        { text: 'Rostro detectado — analizando',   color: 'text-blue-600',   dot: 'bg-blue-500'   },
-  verifying:       { text: 'Verificando biometría...',        color: 'text-blue-700',   dot: 'bg-blue-600'   },
-  verified:        { text: '✓ Identidad verificada',          color: 'text-emerald-600',dot: 'bg-emerald-500'},
-  error:           { text: 'Error de cámara',                 color: 'text-red-500',    dot: 'bg-red-500'    },
+  idle: { text: 'Listo', color: 'text-gray-500', dot: 'bg-gray-400' },
+  loading_models: { text: 'Cargando modelos IA...', color: 'text-blue-600', dot: 'bg-blue-500' },
+  starting_camera: { text: 'Iniciando cámara...', color: 'text-blue-600', dot: 'bg-blue-500' },
+  no_face: { text: 'Coloca tu rostro en el marco', color: 'text-amber-600', dot: 'bg-amber-500' },
+  multiple: { text: 'Solo un rostro por favor', color: 'text-red-500', dot: 'bg-red-500' },
+  detected: { text: 'Rostro detectado — analizando', color: 'text-blue-600', dot: 'bg-blue-500' },
+  verifying: { text: 'Verificando biometría...', color: 'text-blue-700', dot: 'bg-blue-600' },
+  verified: { text: '✓ Identidad verificada', color: 'text-emerald-600', dot: 'bg-emerald-500' },
+  error: { text: 'Error de cámara', color: 'text-red-500', dot: 'bg-red-500' },
 }
 
 interface Props {
@@ -44,32 +44,32 @@ export default function FacialCamera({ onVerified, onCancel, lightTheme = false 
       setVerifyingBackend(true)
       setVerifyError(null)
       const desc = faceDescriptor
-      ;(async () => {
-        try {
-          const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/users/verify`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ descriptor: desc }),
-          })
-          const result = await response.json()
-          if (result.success && result.match) {
-            setBackendVerified(true)
-            // Wait to let verified animation show
-            setTimeout(() => {
+        ; (async () => {
+          try {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/users/verify`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ descriptor: desc }),
+            })
+            const result = await response.json()
+            if (result.success && result.match) {
+              setBackendVerified(true)
+              // Wait to let verified animation show
+              setTimeout(() => {
+                stopCamera()
+                onVerified(result.user)
+              }, 1200)
+            } else {
               stopCamera()
-              onVerified(result.user)
-            }, 1200)
-          } else {
+              setVerifyError(result.message || 'Rostro no coincide con ningún usuario registrado.')
+            }
+          } catch (e) {
             stopCamera()
-            setVerifyError(result.message || 'Rostro no coincide con ningún usuario registrado.')
+            setVerifyError('Error al conectar con el servidor de biometría.')
+          } finally {
+            setVerifyingBackend(false)
           }
-        } catch (e) {
-          stopCamera()
-          setVerifyError('Error al conectar con el servidor de biometría.')
-        } finally {
-          setVerifyingBackend(false)
-        }
-      })()
+        })()
     }
   }, [status, faceDescriptor, verifyingBackend, verifyError, onVerified, stopCamera])
 
@@ -82,11 +82,11 @@ export default function FacialCamera({ onVerified, onCancel, lightTheme = false 
 
   const info = STATUS_INFO[status]
 
-  const camBg      = lightTheme ? '#1e293b' : '#0a0f1e'
-  const labelBg    = lightTheme ? 'rgba(15,23,42,0.72)' : 'rgba(2,8,24,0.75)'
-  const cancelBg   = lightTheme ? '#f1f5ff' : 'rgba(255,255,255,0.04)'
-  const cancelBdr  = lightTheme ? '#e0e7ff' : 'rgba(255,255,255,0.08)'
-  const cancelClr  = lightTheme ? '#6b7280' : 'rgba(255,255,255,0.5)'
+  const camBg = lightTheme ? '#1e293b' : '#0a0f1e'
+  const labelBg = lightTheme ? 'rgba(15,23,42,0.72)' : 'rgba(2,8,24,0.75)'
+  const cancelBg = lightTheme ? '#f1f5ff' : 'rgba(255,255,255,0.04)'
+  const cancelBdr = lightTheme ? '#e0e7ff' : 'rgba(255,255,255,0.08)'
+  const cancelClr = lightTheme ? '#6b7280' : 'rgba(255,255,255,0.5)'
 
   return (
     <div className="flex flex-col gap-4">
@@ -248,7 +248,7 @@ export default function FacialCamera({ onVerified, onCancel, lightTheme = false 
         <div className="relative p-4 rounded-2xl bg-slate-900/60 border border-white/10 backdrop-blur-md shadow-lg overflow-hidden flex flex-col gap-3">
           {/* High-tech Grid Background */}
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:14px_24px]" />
-          
+
           <div className="flex justify-between items-center relative z-10">
             <div className="flex items-center gap-2">
               <span className="relative flex h-2 w-2">

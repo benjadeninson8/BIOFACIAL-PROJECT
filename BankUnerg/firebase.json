@@ -1,0 +1,11 @@
+{
+  "hosting": {
+    "site": "biofacial-81dbf",
+    "public": "dist",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  }
+}
