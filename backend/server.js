@@ -40,10 +40,22 @@ try {
   process.exit(1);
 }
 
-// Database Helpers interacting only with MongoDB Atlas
+// Database Helpers interacting with MongoDB Atlas (using an in-memory cache to speed up verification)
+let usersCache = null;
+let lastCacheFetch = 0;
+const CACHE_TTL = 10000; // 10 seconds Cache TTL
+
 async function getUsersList() {
   if (!usersCollection) throw new Error('Base de datos no inicializada.');
-  return await usersCollection.find({}).toArray();
+  const now = Date.now();
+  if (!usersCache || (now - lastCacheFetch) > CACHE_TTL) {
+    console.log('[BioFacial] [Cache Miss] Cargando lista de usuarios desde MongoDB Atlas...');
+    usersCache = await usersCollection.find({}).toArray();
+    lastCacheFetch = now;
+  } else {
+    console.log('[BioFacial] [Cache Hit] Sirviendo lista de usuarios desde caché en memoria.');
+  }
+  return usersCache;
 }
 
 async function saveUser(user) {
@@ -53,17 +65,26 @@ async function saveUser(user) {
     user,
     { upsert: true }
   );
+  // Invalidate cache immediately
+  usersCache = null;
+  lastCacheFetch = 0;
 }
 
 async function deleteUser(id) {
   if (!usersCollection) throw new Error('Base de datos no inicializada.');
   const result = await usersCollection.deleteOne({ id });
+  // Invalidate cache immediately
+  usersCache = null;
+  lastCacheFetch = 0;
   return result.deletedCount > 0;
 }
 
 async function clearDatabase() {
   if (!usersCollection) throw new Error('Base de datos no inicializada.');
   await usersCollection.deleteMany({});
+  // Invalidate cache immediately
+  usersCache = null;
+  lastCacheFetch = 0;
 }
 
 // Helper to compute Euclidean Distance

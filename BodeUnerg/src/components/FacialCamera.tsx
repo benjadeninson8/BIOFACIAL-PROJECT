@@ -38,22 +38,12 @@ export default function FacialCamera({ onVerified, onCancel, lightTheme = false 
     return () => stopCamera()
   }, [modelsReady]) // eslint-disable-line
 
-  const onVerifiedRef = useRef(onVerified)
-  useEffect(() => {
-    onVerifiedRef.current = onVerified
-  }, [onVerified])
-
-  const faceDescriptorRef = useRef<number[] | null>(null)
-  if (faceDescriptor) {
-    faceDescriptorRef.current = faceDescriptor
-  }
-
   // Trigger parent when verified by comparing face descriptor on backend
   useEffect(() => {
-    if (status === 'verified' && faceDescriptorRef.current && !verifyingBackend && !verifyError) {
+    if (status === 'verified' && faceDescriptor && !verifyingBackend && !verifyError) {
       setVerifyingBackend(true)
       setVerifyError(null)
-      const desc = faceDescriptorRef.current
+      const desc = faceDescriptor
       ;(async () => {
         try {
           const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/users/verify`, {
@@ -67,7 +57,7 @@ export default function FacialCamera({ onVerified, onCancel, lightTheme = false 
             // Wait to let verified animation show
             setTimeout(() => {
               stopCamera()
-              onVerifiedRef.current(result.user)
+              onVerified(result.user)
             }, 1200)
           } else {
             stopCamera()
@@ -81,7 +71,7 @@ export default function FacialCamera({ onVerified, onCancel, lightTheme = false 
         }
       })()
     }
-  }, [status, verifyingBackend, verifyError])
+  }, [status, faceDescriptor, verifyingBackend, verifyError, onVerified, stopCamera])
 
   const handleRetry = () => {
     setVerifyError(null)

@@ -133,27 +133,16 @@ function CameraPanel({ onVerified }: { onVerified: (descriptor: number[]) => voi
   const { videoRef, canvasRef, status, error, confidence, faceDescriptor, startCamera, stopCamera, isRunning } = useFaceDetection()
   const [verified, setVerified] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const faceDescriptorRef = useRef<number[] | null>(null)
-
-  if (faceDescriptor) {
-    faceDescriptorRef.current = faceDescriptor
-  }
-
-  const onVerifiedRef = useRef(onVerified)
   useEffect(() => {
-    onVerifiedRef.current = onVerified
-  }, [onVerified])
-
-  useEffect(() => {
-    if (status === 'verified' && !verified && faceDescriptorRef.current) {
-      const desc = faceDescriptorRef.current
+    if (status === 'verified' && !verified && faceDescriptor) {
+      const desc = faceDescriptor
       timerRef.current = setTimeout(() => {
         setVerified(true)
-        onVerifiedRef.current(desc)
+        onVerified(desc)
       }, 800)
     }
     return () => { if (timerRef.current) clearTimeout(timerRef.current) }
-  }, [status, verified])
+  }, [status, verified, faceDescriptor, onVerified])
 
   const effectiveStatus: FaceStatus = verified ? 'verified' : status
   const info = STATUS_LABELS[effectiveStatus]
