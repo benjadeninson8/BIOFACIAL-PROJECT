@@ -1,0 +1,187 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html, body, #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #f8faff;
+    color: #111827;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer components {
+  .input-field {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.75rem;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 0.9375rem;
+    font-family: 'Inter', sans-serif;
+    background: #fff;
+    color: #111827;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+
+  .input-field::placeholder {
+    color: #9ca3af;
+  }
+
+  .input-field:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  }
+
+  .btn-blue {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.875rem 1.5rem;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: #fff;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(37, 99, 235, 0.35);
+    transition: transform 0.15s, box-shadow 0.2s, background 0.2s;
+    letter-spacing: 0.01em;
+  }
+
+  .btn-blue:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    box-shadow: 0 6px 28px rgba(37, 99, 235, 0.45);
+    transform: translateY(-1px);
+  }
+
+  .btn-blue:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 12px rgba(37, 99, 235, 0.3);
+  }
+
+  .btn-blue:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.06);
+    border: 1px solid rgba(0,0,0,0.04);
+  }
+}
+
+/* Camera view styles */
+.camera-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3/4;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #0f172a;
+}
+
+.camera-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* mirror selfie */
+}
+
+.camera-canvas {
+  position: absolute;
+  inset: 0;
+  transform: scaleX(-1);
+}
+
+/* Corner brackets overlay */
+.face-bracket {
+  position: absolute;
+  width: 52px;
+  height: 52px;
+  border-color: #2563eb;
+  border-style: solid;
+  opacity: 0.85;
+}
+.face-bracket.tl { top: 16%; left: 22%; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
+.face-bracket.tr { top: 16%; right: 22%; border-width: 3px 3px 0 0; border-radius: 0 4px 0 0; }
+.face-bracket.bl { bottom: 22%; left: 22%; border-width: 0 0 3px 3px; border-radius: 0 0 0 4px; }
+.face-bracket.br { bottom: 22%; right: 22%; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
+
+/* Scan line */
+@keyframes scanDown {
+  0%   { top: 16%; opacity: 0; }
+  5%   { opacity: 1; }
+  95%  { opacity: 1; }
+  100% { top: 78%; opacity: 0; }
+}
+
+.scan-beam {
+  position: absolute;
+  left: 22%;
+  right: 22%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #2563eb, #60a5fa, #2563eb, transparent);
+  box-shadow: 0 0 12px rgba(37,99,235,0.8);
+  animation: scanDown 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Status pill */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: blink 1.5s ease-in-out infinite;
+}
+
+/* Page fade-in */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-page {
+  animation: fadeSlideUp 0.5s ease both;
+}
+.delay-1 { animation-delay: 0.05s; }
+.delay-2 { animation-delay: 0.10s; }
+.delay-3 { animation-delay: 0.15s; }
+.delay-4 { animation-delay: 0.25s; }
+.delay-5 { animation-delay: 0.35s; }
+
+/* Step indicator */
+.step-active {
+  background: #2563eb;
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(37,99,235,0.15);
+}
+.step-done {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.step-idle {
+  background: #f3f4f6;
+  color: #9ca3af;
+}

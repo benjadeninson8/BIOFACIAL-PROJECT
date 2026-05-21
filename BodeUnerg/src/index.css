@@ -1,0 +1,185 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body, #root { height: 100%; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #f0f4fb;
+    color: #111827;
+    -webkit-font-smoothing: antialiased;
+    /* Allow scroll on mobile — kiosk handles its own overflow */
+    overflow-y: auto;
+  }
+
+  /* On desktop (kiosk) lock scroll */
+  @media (min-width: 768px) {
+    body { overflow: hidden; }
+  }
+}
+
+@layer components {
+
+  /* ── Surfaces ── */
+  .surface {
+    background: rgba(255,255,255,0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.9);
+    box-shadow: 0 2px 12px rgba(37,99,235,0.07), 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .surface-strong {
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,1);
+    box-shadow: 0 4px 24px rgba(37,99,235,0.08), 0 1px 4px rgba(0,0,0,0.05);
+  }
+
+  /* ── Product row — desktop grid ── */
+  .product-row {
+    position: relative;
+    display: grid;
+    grid-template-columns: 60px 1fr auto auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1.25rem;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.85);
+    border: 1px solid rgba(37,99,235,0.07);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    transition: background 0.2s, box-shadow 0.2s, border-color 0.2s;
+  }
+
+  /* ── Product row — mobile: 2-row stacked layout ── */
+  @media (max-width: 767px) {
+    .product-row {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.625rem;
+      padding: 0.875rem 1rem;
+    }
+
+    .product-row .row-top {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .product-row .row-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-left: 0;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .product-row:hover {
+      background: rgba(255,255,255,0.98);
+      box-shadow: 0 4px 16px rgba(37,99,235,0.1);
+    }
+    /* Hide mobile-only wrappers on desktop */
+    .row-top, .row-bottom { display: contents; }
+  }
+
+  /* ── Qty buttons ── */
+  .qty-btn {
+    width: 30px; height: 30px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    background: #f1f5ff;
+    border: 1px solid #dbeafe;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 1rem; font-weight: 600;
+    user-select: none; flex-shrink: 0;
+  }
+  .qty-btn:hover { background: #dbeafe; border-color: #93c5fd; color: #1d4ed8; }
+  .qty-btn:active { transform: scale(0.9); }
+
+  /* ── Pay button ── */
+  .pay-btn {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0.625rem; width: 100%;
+    padding: 0.85rem 1.5rem;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #fff;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700; font-size: 1.05rem;
+    letter-spacing: 0.05em;
+    border: none; border-radius: 14px; cursor: pointer;
+    box-shadow: 0 4px 20px rgba(37,99,235,0.35);
+    transition: all 0.25s; position: relative; overflow: hidden;
+  }
+  .pay-btn::before {
+    content: ''; position: absolute;
+    top: 0; left: -100%; width: 100%; height: 100%;
+    background: linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);
+    transition: left 0.5s;
+  }
+  .pay-btn:hover::before { left: 100%; }
+  .pay-btn:hover { background: linear-gradient(135deg,#1d4ed8,#1e40af); box-shadow: 0 6px 28px rgba(37,99,235,0.45); transform: translateY(-1px); }
+  .pay-btn:active { transform: translateY(0); }
+  .pay-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+  /* ── Modal backdrop ── */
+  .modal-backdrop {
+    background: rgba(240,244,251,0.65);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  /* ── Payment method tile (2x2 grid) ── */
+  .method-tile {
+    position: relative;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 0.5rem;
+    padding: 1.125rem 0.75rem;
+    border-radius: 18px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+    text-align: center; overflow: hidden;
+  }
+  .method-tile.normal { background: #f8faff; border-color: #e5edff; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+  .method-tile.normal:hover { background: #fff; border-color: #bfdbfe; box-shadow: 0 4px 16px rgba(37,99,235,0.1); }
+  .method-tile.normal.selected { background: #eff6ff; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
+  .method-tile.featured { background: linear-gradient(145deg,#eff6ff,#dbeafe); border-color: #93c5fd; box-shadow: 0 2px 12px rgba(37,99,235,0.12); }
+  .method-tile.featured:hover { background: linear-gradient(145deg,#dbeafe,#bfdbfe); border-color: #3b82f6; box-shadow: 0 4px 24px rgba(37,99,235,0.2); }
+  .method-tile.featured.selected { background: linear-gradient(145deg,#dbeafe,#93c5fd); border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37,99,235,0.15); }
+
+  /* ── Confirm button in modal ── */
+  .confirm-btn {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0.5rem; width: 100%; padding: 0.9rem 1.5rem;
+    background: linear-gradient(135deg,#2563eb,#1d4ed8);
+    color: #fff; font-family: 'Outfit', sans-serif;
+    font-weight: 700; font-size: 1rem; letter-spacing: 0.04em;
+    border: none; border-radius: 13px; cursor: pointer;
+    box-shadow: 0 4px 16px rgba(37,99,235,0.3); transition: all 0.2s;
+  }
+  .confirm-btn:hover { background: linear-gradient(135deg,#1d4ed8,#1e40af); box-shadow: 0 6px 24px rgba(37,99,235,0.4); transform: translateY(-1px); }
+  .confirm-btn:active { transform: translateY(0); }
+  .confirm-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+}
+
+/* Gradient text */
+.text-gradient-blue {
+  background: linear-gradient(135deg,#1d4ed8,#2563eb);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: rgba(37,99,235,0.2); border-radius: 2px; }
