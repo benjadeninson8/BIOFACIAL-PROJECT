@@ -72,18 +72,30 @@ export function useFaceDetection(): UseFaceDetectionReturn {
     return () => { mounted = false }
   }, [])
 
+  const lastDetectionTimeRef = useRef<number>(0)
+
   /* ── Detection loop ── */
   const runLoop = useCallback(async () => {
-    if (hasVerifiedRef.current) return
+    if (hasVerifiedRef.current || !streamRef.current) return
     const video   = videoRef.current
     const canvas  = canvasRef.current
 
     if (!video || video.readyState < 2) {
-      if (!hasVerifiedRef.current) {
+      if (streamRef.current && !hasVerifiedRef.current) {
         loopRef.current = requestAnimationFrame(runLoop)
       }
       return
     }
+
+    const now = performance.now()
+    // Limit to 10 FPS (100ms interval) to prevent CPU/UI thread blocking
+    if (now - lastDetectionTimeRef.current < 100) {
+      if (streamRef.current && !hasVerifiedRef.current) {
+        loopRef.current = requestAnimationFrame(runLoop)
+      }
+      return
+    }
+    lastDetectionTimeRef.current = now
 
     if (canvas) {
       try {
@@ -94,11 +106,14 @@ export function useFaceDetection(): UseFaceDetectionReturn {
           canvas.style.removeProperty('height')
         }
 
-        // Run full face detection pipeline on every frame
+        // Run full face detection pipeline
         const detections = await faceapi
           .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.4 }))
           .withFaceLandmarks()
           .withFaceDescriptors()
+
+        // Check if camera was stopped during the await
+        if (!streamRef.current) return
 
         const ctx = canvas.getContext('2d')
         if (ctx) {
@@ -147,9 +162,9 @@ export function useFaceDetection(): UseFaceDetectionReturn {
             const box = d.detection.box
 
             // Bounding box drawing
-            ctx.strokeStyle = pct >= 100 ? '#10b981' : '#2563eb'
+            ctx.strokeStyle = pct >= 100 ? '#10b981' : '#3b82f6'
             ctx.lineWidth   = 2
-            ctx.shadowColor = pct >= 100 ? 'rgba(16,185,129,0.6)' : 'rgba(37,99,235,0.6)'
+            ctx.shadowColor = pct >= 100 ? 'rgba(16,185,129,0.6)' : 'rgba(59,130,246,0.6)'
             ctx.shadowBlur  = 10
             ctx.strokeRect(box.x, box.y, box.width, box.height)
             ctx.shadowBlur  = 0
@@ -158,15 +173,22 @@ export function useFaceDetection(): UseFaceDetectionReturn {
             d.landmarks.positions.forEach((p: any) => {
               ctx.beginPath()
               ctx.arc(p.x, p.y, 2, 0, Math.PI * 2)
-              ctx.fillStyle = pct >= 100 ? 'rgba(16,185,129,0.8)' : 'rgba(37,99,235,0.8)'
+              ctx.fillStyle = pct >= 100 ? 'rgba(16,185,129,0.8)' : '#3b82f6'
               ctx.fill()
             })
 
+            // Confidence progress text inside viewport
+            if (pct < 100) {
+              ctx.font = '10px monospace'
+              ctx.fillStyle = '#3b82f6'
+              ctx.fillText(`ANALYZE: ${pct}%`, box.x, box.y - 8)
+            }
+
             // Corner brackets
-            const bLen = 18
-            ctx.strokeStyle = pct >= 100 ? '#10b981' : '#2563eb'
+            const bLen = 15
+            ctx.strokeStyle = pct >= 100 ? '#10b981' : '#3b82f6'
             ctx.lineWidth   = 2.5
-            ctx.shadowColor = pct >= 100 ? '#10b981' : '#2563eb'
+            ctx.shadowColor = pct >= 100 ? 'rgba(16,185,129,0.4)' : 'rgba(59,130,246,0.4)'
             ctx.shadowBlur  = 6
             const corner = (x: number, y: number, dx: number, dy: number) => {
               ctx.beginPath()
@@ -185,7 +207,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
       }
     }
 
-    if (!hasVerifiedRef.current) {
+    if (streamRef.current && !hasVerifiedRef.current) {
       loopRef.current = requestAnimationFrame(runLoop)
     }
   }, [])

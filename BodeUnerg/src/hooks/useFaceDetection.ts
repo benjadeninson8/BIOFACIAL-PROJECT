@@ -72,18 +72,30 @@ export function useFaceDetection(): UseFaceDetectionReturn {
     return () => { mounted = false }
   }, [])
 
+  const lastDetectionTimeRef = useRef<number>(0)
+
   /* ── Detection loop ── */
   const runLoop = useCallback(async () => {
-    if (hasVerifiedRef.current) return
+    if (hasVerifiedRef.current || !streamRef.current) return
     const video   = videoRef.current
     const canvas  = canvasRef.current
 
     if (!video || video.readyState < 2) {
-      if (!hasVerifiedRef.current) {
+      if (streamRef.current && !hasVerifiedRef.current) {
         loopRef.current = requestAnimationFrame(runLoop)
       }
       return
     }
+
+    const now = performance.now()
+    // Limit to 10 FPS (100ms interval) to prevent CPU/UI thread blocking
+    if (now - lastDetectionTimeRef.current < 100) {
+      if (streamRef.current && !hasVerifiedRef.current) {
+        loopRef.current = requestAnimationFrame(runLoop)
+      }
+      return
+    }
+    lastDetectionTimeRef.current = now
 
     if (canvas) {
       try {
@@ -94,11 +106,14 @@ export function useFaceDetection(): UseFaceDetectionReturn {
           canvas.style.removeProperty('height')
         }
 
-        // Run full face detection pipeline on every frame
+        // Run full face detection pipeline
         const detections = await faceapi
           .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.4 }))
           .withFaceLandmarks()
           .withFaceDescriptors()
+
+        // Check if camera was stopped during the await
+        if (!streamRef.current) return
 
         const ctx = canvas.getContext('2d')
         if (ctx) {
@@ -211,7 +226,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
       }
     }
 
-    if (!hasVerifiedRef.current) {
+    if (streamRef.current && !hasVerifiedRef.current) {
       loopRef.current = requestAnimationFrame(runLoop)
     }
   }, [])
