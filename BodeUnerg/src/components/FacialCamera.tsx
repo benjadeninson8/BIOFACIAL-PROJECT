@@ -43,17 +43,23 @@ export default function FacialCamera({ onVerified, onCancel, lightTheme = false 
     onVerifiedRef.current = onVerified
   }, [onVerified])
 
+  const faceDescriptorRef = useRef<number[] | null>(null)
+  if (faceDescriptor) {
+    faceDescriptorRef.current = faceDescriptor
+  }
+
   // Trigger parent when verified by comparing face descriptor on backend
   useEffect(() => {
-    if (status === 'verified' && faceDescriptor && !verifyingBackend && !verifyError) {
+    if (status === 'verified' && faceDescriptorRef.current && !verifyingBackend && !verifyError) {
       setVerifyingBackend(true)
       setVerifyError(null)
+      const desc = faceDescriptorRef.current
       ;(async () => {
         try {
           const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/users/verify`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ descriptor: faceDescriptor }),
+            body: JSON.stringify({ descriptor: desc }),
           })
           const result = await response.json()
           if (result.success && result.match) {
@@ -75,7 +81,7 @@ export default function FacialCamera({ onVerified, onCancel, lightTheme = false 
         }
       })()
     }
-  }, [status, faceDescriptor, verifyingBackend, verifyError])
+  }, [status, verifyingBackend, verifyError])
 
   const handleRetry = () => {
     setVerifyError(null)
