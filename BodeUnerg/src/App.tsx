@@ -78,7 +78,7 @@ export default function App() {
   const [showRegisterQR, setShowRegisterQR] = useState(false)
   const [mobileTab, setMobileTab] = useState<'shelf' | 'cart'>('shelf')
   const [activeCategory, setActiveCategory] = useState('Todos')
-  const registerUrl = import.meta.env.VITE_REGISTER_URL || 'https://bankunerg1.netlify.app'
+  const registerUrl = import.meta.env.VITE_REGISTER_URL || 'https://biofacial-81dbf.web.app'
 
   const updateQty = useCallback((id: number, delta: number) => {
     setProducts(prev =>
