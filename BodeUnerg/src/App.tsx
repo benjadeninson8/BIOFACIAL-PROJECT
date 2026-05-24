@@ -5,7 +5,7 @@ import {
   ShoppingCart, X, CheckCircle, Scan, CreditCard,
   Smartphone, ChevronRight, Wifi, Shield, ArrowLeft, Banknote, Package, QrCode
 } from 'lucide-react'
-import FacialCamera from './components/FacialCamera'
+import FacialCamera, { type BiometricUser } from './components/FacialCamera'
 import ConfettiBlast from './components/ConfettiBlast'
 import SpringCounter from './components/SpringCounter'
 import ProductRow, { type Product } from './components/ProductRow'
@@ -71,7 +71,8 @@ export default function App() {
   const [modal,        setModal]        = useState<ModalStep>('closed')
   const [selected,     setSelected]     = useState<string | null>(null)
   const [paidWith,     setPaidWith]     = useState('')
-  const [verifiedUser, setVerifiedUser] = useState<any | null>(null)
+  const [verifiedUser, setVerifiedUser] = useState<BiometricUser | null>(null)
+  const [payRef,       setPayRef]       = useState('')
   const [confetti,     setConfetti]     = useState(false)
   const [showScanner,  setShowScanner]  = useState(false)
   const [showCatalog,  setShowCatalog]  = useState(false)
@@ -108,15 +109,17 @@ export default function App() {
     setShowScanner(false)
   }
 
-  const triggerSuccess = (method: string, user: any = null) => {
+  const triggerSuccess = (method: string, user: BiometricUser | null = null) => {
     setPaidWith(method)
     setVerifiedUser(user)
+    setPayRef(`BU-${Date.now().toString(36).toUpperCase().slice(-8)}`)
     setModal('success')
     setConfetti(true)
     setTimeout(() => {
       closeAll()
       setProducts(INITIAL)
       setVerifiedUser(null)
+      setPayRef('')
     }, 3800)
   }
 
@@ -585,7 +588,7 @@ export default function App() {
                           )}
                           <div className="flex justify-between items-center">
                             <span className="text-gray-400 text-xs uppercase tracking-widest font-medium">Ref.</span>
-                            <span className="font-mono text-gray-500 text-xs">BU-{Date.now().toString(36).toUpperCase().slice(-8)}</span>
+                            <span className="font-mono text-gray-500 text-xs">{payRef}</span>
                           </div>
                         </div>
 

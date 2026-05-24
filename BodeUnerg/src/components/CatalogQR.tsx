@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { motion } from 'framer-motion'
 import { X, QrCode } from 'lucide-react'
-import { CATALOG } from './BarcodeScanner'
+import { CATALOG } from '../constants/catalog'
 
 interface Props { onClose: () => void }
 

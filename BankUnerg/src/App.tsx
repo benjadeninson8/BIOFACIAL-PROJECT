@@ -42,7 +42,7 @@ interface FieldProps {
   validate: (v: string) => boolean
 }
 
-function ValidatedInput({ id: _id, label, placeholder, icon: Icon, value, onChange, validate }: FieldProps) {
+function ValidatedInput({ label, placeholder, icon: Icon, value, onChange, validate }: FieldProps) {
   const [focused, setFocused] = useState(false)
   const [touched, setTouched] = useState(false)
 
@@ -418,7 +418,7 @@ export default function App() {
       } else {
         setRegisterError(result.message || 'Error al registrar el usuario.')
       }
-    } catch (e) {
+    } catch {
       setRegisterError('No se pudo conectar con el servidor backend.')
     } finally {
       setIsRegistering(false)

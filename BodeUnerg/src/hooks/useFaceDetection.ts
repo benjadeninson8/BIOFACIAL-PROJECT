@@ -28,6 +28,21 @@ export interface UseFaceDetectionReturn {
 const MODEL_URL = '/models'
 const FRAMES_TO_VERIFY = 7
 
+interface DetectionResult {
+  descriptor: Float32Array
+  detection: {
+    box: {
+      x: number
+      y: number
+      width: number
+      height: number
+    }
+  }
+  landmarks: {
+    positions: { x: number; y: number }[]
+  }
+}
+
 export function useFaceDetection(): UseFaceDetectionReturn {
   const videoRef   = useRef<HTMLVideoElement | null>(null)
   const canvasRef  = useRef<HTMLCanvasElement | null>(null)
@@ -35,8 +50,9 @@ export function useFaceDetection(): UseFaceDetectionReturn {
   const loopRef    = useRef<number | null>(null)
   const detectedFrames = useRef(0)
   const hasVerifiedRef = useRef(false)
+  const isStartingRef = useRef(false)
 
-  const [status,          setStatus]          = useState<FaceStatus>('idle')
+  const [status,          setStatus]          = useState<FaceStatus>('loading_models')
   const [error,           setError]           = useState<string | null>(null)
   const [confidence,      setConfidence]      = useState(0)
   const [faceDescriptor,  setFaceDescriptor]  = useState<number[] | null>(null)
@@ -46,7 +62,6 @@ export function useFaceDetection(): UseFaceDetectionReturn {
   /* ── Load models once on mount ── */
   useEffect(() => {
     let mounted = true
-    setStatus('loading_models')
     ;(async () => {
       try {
         await Promise.all([
@@ -54,6 +69,18 @@ export function useFaceDetection(): UseFaceDetectionReturn {
           faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
           faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
         ])
+        
+        try {
+          // Warm up face-api backend on a dummy canvas to prevent main thread blocking on first scan
+          const dummy = document.createElement('canvas')
+          dummy.width = 160
+          dummy.height = 120
+          await faceapi.detectAllFaces(dummy, new faceapi.TinyFaceDetectorOptions({ inputSize: 160 }))
+          console.log('[BioFacial] Backend de face-api pre-calentado con éxito (BodeUnerg).')
+        } catch (warmupErr) {
+          console.warn('[BioFacial] No se pudo pre-calentar face-api (no crítico):', warmupErr)
+        }
+
         if (mounted) {
           setModelsReady(true)
           setStatus('idle')
@@ -73,6 +100,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
   }, [])
 
   const lastDetectionTimeRef = useRef<number>(0)
+  const runLoopRef = useRef<() => void>(() => {})
 
   /* ── Detection loop ── */
   const runLoop = useCallback(async () => {
@@ -82,7 +110,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
 
     if (!video || video.readyState < 2) {
       if (streamRef.current && !hasVerifiedRef.current) {
-        loopRef.current = requestAnimationFrame(runLoop)
+        loopRef.current = requestAnimationFrame(() => { runLoopRef.current(); })
       }
       return
     }
@@ -91,7 +119,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
     // Limit to 10 FPS (100ms interval) to prevent CPU/UI thread blocking
     if (now - lastDetectionTimeRef.current < 100) {
       if (streamRef.current && !hasVerifiedRef.current) {
-        loopRef.current = requestAnimationFrame(runLoop)
+        loopRef.current = requestAnimationFrame(() => { runLoopRef.current(); })
       }
       return
     }
@@ -118,7 +146,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
         const ctx = canvas.getContext('2d')
         if (ctx) {
           ctx.clearRect(0, 0, canvas.width, canvas.height)
-          const resized = faceapi.resizeResults(detections, displaySize) as any[]
+          const resized = faceapi.resizeResults(detections, displaySize) as unknown as DetectionResult[]
 
           if (resized.length === 0) {
             detectedFrames.current = Math.max(0, detectedFrames.current - 1)
@@ -174,7 +202,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
 
             // Landmark dots
             const pts = d.landmarks.positions
-            pts.forEach((p: any) => {
+            pts.forEach((p) => {
               ctx.beginPath()
               ctx.arc(p.x, p.y, 2, 0, Math.PI * 2)
               ctx.fillStyle = pct >= 100 ? 'rgba(0,229,255,0.9)' : 'rgba(37,99,235,0.85)'
@@ -227,12 +255,21 @@ export function useFaceDetection(): UseFaceDetectionReturn {
     }
 
     if (streamRef.current && !hasVerifiedRef.current) {
-      loopRef.current = requestAnimationFrame(runLoop)
+      loopRef.current = requestAnimationFrame(() => { runLoopRef.current(); })
     }
   }, [])
 
+  useEffect(() => {
+    runLoopRef.current = runLoop
+  }, [runLoop])
+
   /* ── Start camera ── */
   const startCamera = useCallback(async () => {
+    if (isStartingRef.current || streamRef.current) {
+      console.warn('[BioFacial] El inicio de la cámara ya está en progreso o ya está activo (BodeUnerg).')
+      return
+    }
+    isStartingRef.current = true
     setError(null)
     setStatus('starting_camera')
     detectedFrames.current = 0
@@ -252,7 +289,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
       }
       setIsRunning(true)
       setStatus('no_face')
-      loopRef.current = requestAnimationFrame(runLoop)
+      loopRef.current = requestAnimationFrame(() => { runLoop(); })
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e)
       console.error('[BioFacial] Error al iniciar cámara (BodeUnerg):', e)
@@ -264,11 +301,14 @@ export function useFaceDetection(): UseFaceDetectionReturn {
         setError('No se pudo acceder a la cámara: ' + msg)
       }
       setStatus('error')
+    } finally {
+      isStartingRef.current = false
     }
   }, [runLoop])
 
   /* ── Stop camera ── */
   const stopCamera = useCallback(() => {
+    isStartingRef.current = false
     if (loopRef.current) {
       cancelAnimationFrame(loopRef.current)
       loopRef.current = null

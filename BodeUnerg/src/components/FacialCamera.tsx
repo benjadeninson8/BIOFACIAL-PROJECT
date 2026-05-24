@@ -15,8 +15,15 @@ const STATUS_INFO: Record<FaceStatus, { text: string; color: string; dot: string
   error: { text: 'Error de cámara', color: 'text-red-500', dot: 'bg-red-500' },
 }
 
+export interface BiometricUser {
+  id: string
+  nombres: string
+  apellidos: string
+  cedula: string
+}
+
 interface Props {
-  onVerified: (user: any) => void
+  onVerified: (user: BiometricUser) => void
   onCancel: () => void
   lightTheme?: boolean
 }
@@ -32,18 +39,33 @@ export default function FacialCamera({ onVerified, onCancel, lightTheme = false 
   const [verifyError, setVerifyError] = useState<string | null>(null)
   const [backendVerified, setBackendVerified] = useState(false)
 
-  // Auto-start once models ready
+  // Auto-start once models ready with a slight delay to let modal animations finish
   useEffect(() => {
-    if (modelsReady) startCamera()
-    return () => stopCamera()
-  }, [modelsReady]) // eslint-disable-line
+    let active = true
+    let timer: ReturnType<typeof setTimeout> | null = null
+
+    if (modelsReady) {
+      timer = setTimeout(() => {
+        if (active) {
+          startCamera()
+        }
+      }, 400)
+    }
+
+    return () => {
+      active = false
+      if (timer) clearTimeout(timer)
+      stopCamera()
+    }
+  }, [modelsReady, startCamera, stopCamera])
 
   // Trigger parent when verified by comparing face descriptor on backend
   useEffect(() => {
     if (status === 'verified' && faceDescriptor && !verifyingBackend && !verifyError) {
-      setVerifyingBackend(true)
-      setVerifyError(null)
       const desc = faceDescriptor
+      const timer = setTimeout(() => {
+        setVerifyingBackend(true)
+        setVerifyError(null)
         ; (async () => {
           try {
             const response = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/users/verify`, {
@@ -63,13 +85,15 @@ export default function FacialCamera({ onVerified, onCancel, lightTheme = false 
               stopCamera()
               setVerifyError(result.message || 'Rostro no coincide con ningún usuario registrado.')
             }
-          } catch (e) {
+          } catch {
             stopCamera()
             setVerifyError('Error al conectar con el servidor de biometría.')
           } finally {
             setVerifyingBackend(false)
           }
         })()
+      }, 0)
+      return () => clearTimeout(timer)
     }
   }, [status, faceDescriptor, verifyingBackend, verifyError, onVerified, stopCamera])
 
