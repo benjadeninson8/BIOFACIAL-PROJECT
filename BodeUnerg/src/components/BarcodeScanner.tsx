@@ -26,8 +26,11 @@ export default function BarcodeScanner({ onScanned, onClose }: Props) {
 
   /* Start scanner */
   useEffect(() => {
+    let active = true
     const reader = new BrowserMultiFormatReader()
     readerRef.current = reader
+    let localStream: MediaStream | null = null
+    let localControls: { stop: () => void } | null = null
 
     ;(async () => {
       try {
@@ -35,46 +38,89 @@ export default function BarcodeScanner({ onScanned, onClose }: Props) {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } },
         })
+
+        if (!active) {
+          stream.getTracks().forEach(t => t.stop())
+          return
+        }
+
+        localStream = stream
         streamRef.current = stream
 
         if (videoRef.current) {
           videoRef.current.srcObject = stream
-          await videoRef.current.play()
+          try {
+            await videoRef.current.play()
+          } catch (playErr) {
+            console.error('Play error:', playErr)
+          }
+        } else {
+          stream.getTracks().forEach(t => t.stop())
+          return
         }
 
         // Check torch support
         const track = stream.getVideoTracks()[0]
-        const caps = track.getCapabilities?.() as Record<string, unknown> | undefined
-        if (caps && 'torch' in caps) setTorchAvail(true)
+        if (track) {
+          const caps = track.getCapabilities?.() as Record<string, unknown> | undefined
+          if (caps && 'torch' in caps) setTorchAvail(true)
+        }
 
         // Start decoding
-        const controls = await reader.decodeFromStream(stream, videoRef.current!, (result, err) => {
-          if (result) {
-            const code = result.getText()
-            setLastResult(code)
-            const product = CATALOG[code]
-            if (product) {
-              setFoundProd(product)
-              setScanState('found')
-            } else {
-              setFoundProd(null)
-              setScanState('unknown')
-              // Reset after 1.5s
-              setTimeout(() => setScanState('scanning'), 1500)
+        if (videoRef.current) {
+          const controls = await reader.decodeFromStream(stream, videoRef.current, (result, err) => {
+            if (!active) return
+            if (result) {
+              const code = result.getText()
+              setLastResult(code)
+              const product = CATALOG[code]
+              if (product) {
+                setFoundProd(product)
+                setScanState('found')
+              } else {
+                setFoundProd(null)
+                setScanState('unknown')
+                // Reset after 1.5s
+                setTimeout(() => {
+                  if (active) setScanState('scanning')
+                }, 1500)
+              }
+            } else if (err && err.name !== 'NotFoundException') {
+              // ignore NotFoundException (no code in frame)
             }
-          } else if (err && err.name !== 'NotFoundException') {
-            // ignore NotFoundException (no code in frame)
+          })
+
+          if (!active) {
+            controls.stop()
+            return
           }
-        })
-        controlsRef.current = controls
+          localControls = controls
+          controlsRef.current = controls
+        } else {
+          stream.getTracks().forEach(t => t.stop())
+        }
       } catch (e) {
         console.error('Scanner error:', e)
       }
     })()
 
     return () => {
-      controlsRef.current?.stop()
-      streamRef.current?.getTracks().forEach(t => t.stop())
+      active = false
+      if (localControls) {
+        localControls.stop()
+      } else {
+        controlsRef.current?.stop()
+      }
+
+      if (localStream) {
+        localStream.getTracks().forEach(t => t.stop())
+      } else {
+        streamRef.current?.getTracks().forEach(t => t.stop())
+      }
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = null
+      }
     }
   }, [])
 

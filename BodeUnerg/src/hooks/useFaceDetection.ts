@@ -282,10 +282,23 @@ export function useFaceDetection(): UseFaceDetectionReturn {
         video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
         audio: false,
       })
+
+      if (!isStartingRef.current) {
+        stream.getTracks().forEach(t => t.stop())
+        return
+      }
+
       streamRef.current = stream
       if (videoRef.current) {
         videoRef.current.srcObject = stream
-        await videoRef.current.play()
+        try {
+          await videoRef.current.play()
+        } catch (playErr) {
+          console.error('[BioFacial] Play error on user camera:', playErr)
+        }
+      } else {
+        stream.getTracks().forEach(t => t.stop())
+        return
       }
       setIsRunning(true)
       setStatus('no_face')
@@ -317,6 +330,9 @@ export function useFaceDetection(): UseFaceDetectionReturn {
     streamRef.current = null
     const canvas = canvasRef.current
     if (canvas) canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height)
+    if (videoRef.current) {
+      videoRef.current.srcObject = null
+    }
     setIsRunning(false)
     setStatus('idle')
     setConfidence(0)
