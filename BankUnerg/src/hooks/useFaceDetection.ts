@@ -27,6 +27,7 @@ export interface UseFaceDetectionReturn {
 
 const MODEL_URL = '/models'
 const FRAMES_TO_VERIFY = 7
+const DETECTOR_OPTIONS = new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.4 })
 
 interface DetectionResult {
   descriptor: Float32Array
@@ -64,6 +65,27 @@ export function useFaceDetection(): UseFaceDetectionReturn {
     let mounted = true
     ;(async () => {
       try {
+        // Optimize TF.js environment to prevent memory leaks and WebGL crashes on Apple devices
+        if (faceapi.tf) {
+          const env = typeof faceapi.tf.env === 'function' ? faceapi.tf.env() : (faceapi.tf as any).ENV;
+          if (env) {
+            const setSafe = (flag: string, value: any) => {
+              try {
+                if (env.flags && flag in env.flags) {
+                  env.set(flag, value);
+                } else if (typeof env.registerFlag === 'function') {
+                  env.registerFlag(flag, () => value);
+                }
+              } catch (e) {
+                console.warn(`[BioFacial] No se pudo configurar la flag ${flag}:`, e);
+              }
+            };
+            setSafe('WEBGL_DELETE_TEXTURE_THRESHOLD', 0);
+            setSafe('WEBGL_FORCE_F16_TEXTURES', true);
+          }
+          console.log('[BioFacial] Entorno de TensorFlow.js optimizado (BankUnerg).')
+        }
+
         await Promise.all([
           faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
           faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
@@ -99,7 +121,6 @@ export function useFaceDetection(): UseFaceDetectionReturn {
     return () => { mounted = false }
   }, [])
 
-  const lastDetectionTimeRef = useRef<number>(0)
   const runLoopRef = useRef<() => void>(() => {})
 
   /* ── Detection loop ── */
@@ -115,17 +136,10 @@ export function useFaceDetection(): UseFaceDetectionReturn {
       return
     }
 
-    const now = performance.now()
-    // Limit to 10 FPS (100ms interval) to prevent CPU/UI thread blocking
-    if (now - lastDetectionTimeRef.current < 100) {
-      if (streamRef.current && !hasVerifiedRef.current) {
-        loopRef.current = requestAnimationFrame(() => { runLoopRef.current(); })
-      }
-      return
-    }
-    lastDetectionTimeRef.current = now
+
 
     if (canvas) {
+      if (faceapi.tf) faceapi.tf.engine().startScope()
       try {
         const displaySize = { width: video.videoWidth, height: video.videoHeight }
         if (canvas.width !== displaySize.width || canvas.height !== displaySize.height) {
@@ -136,7 +150,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
 
         // Run full face detection pipeline
         const detections = await faceapi
-          .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.4 }))
+          .detectAllFaces(video, DETECTOR_OPTIONS)
           .withFaceLandmarks()
           .withFaceDescriptors()
 
@@ -232,6 +246,8 @@ export function useFaceDetection(): UseFaceDetectionReturn {
         }
       } catch (err) {
         console.error('[BioFacial] Error en frame de detección:', err)
+      } finally {
+        if (faceapi.tf) faceapi.tf.engine().endScope()
       }
     }
 
