@@ -393,6 +393,18 @@ export default function App() {
   const [isRegistering, setIsRegistering] = useState(false)
   const [registerError, setRegisterError] = useState<string | null>(null)
 
+  // Ping Railway backend on page load to prevent cold-start delay when user reaches camera step
+  useEffect(() => {
+    const api = import.meta.env.VITE_API_URL || ''
+    if (!api) return
+    const ctrl = new AbortController()
+    const t = setTimeout(() => ctrl.abort(), 5000)
+    fetch(`${api}/api/health`, { signal: ctrl.signal })
+      .then(() => console.log('[BioFacial] Backend pre-calentado.'))
+      .catch(() => {}) // silent — failure is fine, just a warm-up
+      .finally(() => clearTimeout(t))
+  }, [])
+
   const handleRegister = async () => {
     if (!faceDescriptor) {
       setRegisterError('No se ha detectado el descriptor facial.')

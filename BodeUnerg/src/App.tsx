@@ -81,6 +81,18 @@ export default function App() {
   const [activeCategory, setActiveCategory] = useState('Todos')
   const registerUrl = import.meta.env.VITE_REGISTER_URL || 'https://biofacial-81dbf.web.app'
 
+  // Ping Railway backend on terminal load to prevent cold-start delay during facial payment
+  useEffect(() => {
+    const api = import.meta.env.VITE_API_URL || ''
+    if (!api) return
+    const ctrl = new AbortController()
+    const t = setTimeout(() => ctrl.abort(), 5000)
+    fetch(`${api}/api/health`, { signal: ctrl.signal })
+      .then(() => console.log('[BioFacial] Backend pre-calentado (BodeUnerg).'))
+      .catch(() => {}) // silent — failure is fine, just a warm-up
+      .finally(() => clearTimeout(t))
+  }, [])
+
   const updateQty = useCallback((id: number, delta: number) => {
     setProducts(prev =>
       prev.map(p => p.id === id ? { ...p, qty: Math.max(0, p.qty + delta) } : p)

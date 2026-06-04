@@ -106,26 +106,34 @@ export function useFaceDetection(): UseFaceDetectionReturn {
           faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
           faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
         ])
-        // Safe to create AFTER models are loaded
-        detectorOptionsRef.current = new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.4 })
-        
-        try {
-          // Warm up face-api backend on a dummy canvas to prevent main thread blocking on first scan
-          const dummy = document.createElement('canvas')
-          dummy.width = 160
-          dummy.height = 120
-          await faceapi.detectAllFaces(dummy, new faceapi.TinyFaceDetectorOptions({ inputSize: 160 }))
-          console.log('[BioFacial] Backend de face-api pre-calentado con éxito (BodeUnerg).')
-        } catch (warmupErr) {
-          console.warn('[BioFacial] No se pudo pre-calentar face-api (no crítico):', warmupErr)
-        }
 
+        // Use smaller inputSize on Apple to reduce GPU shader compilation time (~40% faster)
+        const isAppleDevice = /Mac|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+                              (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+        const inputSize = isAppleDevice ? 128 : 160
+        detectorOptionsRef.current = new faceapi.TinyFaceDetectorOptions({ inputSize, scoreThreshold: 0.4 })
+
+        // Mark models as ready IMMEDIATELY so the user can start the camera now.
+        // The warmup (WebGL shader compilation) runs in the background — it's non-blocking.
         if (mounted) {
           setModelsReady(true)
           setStatus('idle')
           setError(null)
-          console.log('[BioFacial] Modelos de face-api cargados con éxito (BodeUnerg).')
+          console.log(`[BioFacial] Modelos listos (inputSize=${inputSize}). Calentando WebGL en segundo plano...`)
         }
+
+        // Fire-and-forget warmup: compiles WebGL shaders while user reads the UI
+        ;(async () => {
+          try {
+            const dummy = document.createElement('canvas')
+            dummy.width = inputSize
+            dummy.height = Math.round(inputSize * 0.75)
+            await faceapi.detectAllFaces(dummy, new faceapi.TinyFaceDetectorOptions({ inputSize }))
+            console.log('[BioFacial] WebGL pre-calentado con éxito (BodeUnerg).')
+          } catch (warmupErr) {
+            console.warn('[BioFacial] Pre-calentamiento no crítico omitido:', warmupErr)
+          }
+        })()
       } catch (err) {
         console.error('[BioFacial] Error al cargar los modelos de face-api (BodeUnerg):', err)
         if (mounted) {

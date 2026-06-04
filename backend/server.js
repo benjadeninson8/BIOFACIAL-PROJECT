@@ -101,6 +101,11 @@ function getEuclideanDistance(a, b) {
   return Math.sqrt(sum);
 }
 
+// Health check — used by Railway and pinged by frontend on load to prevent cold starts
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', ts: Date.now() });
+});
+
 // Get all users (useful for debugging)
 app.get('/api/users', async (req, res) => {
   try {
