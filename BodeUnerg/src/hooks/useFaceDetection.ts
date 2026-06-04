@@ -27,7 +27,9 @@ export interface UseFaceDetectionReturn {
 
 const MODEL_URL = '/models'
 const FRAMES_TO_VERIFY = 7
-const DETECTOR_OPTIONS = new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.4 })
+// NOTE: DETECTOR_OPTIONS intentionally NOT created at module level.
+// Creating faceapi objects before models are loaded can crash React silently.
+// It's created lazily inside the hook as a ref.
 
 interface DetectionResult {
   descriptor: Float32Array
@@ -52,6 +54,12 @@ export function useFaceDetection(): UseFaceDetectionReturn {
   const detectedFrames = useRef(0)
   const hasVerifiedRef = useRef(false)
   const isStartingRef = useRef(false)
+  // Lazy detector options — created once after face-api is ready
+  const detectorOptionsRef = useRef<faceapi.TinyFaceDetectorOptions | null>(null)
+  // Guard: prevents overlapping async detection calls
+  const isDetectingRef = useRef(false)
+  // Throttle: tracks last frame timestamp for ~15fps cap during detection
+  const lastFrameTimeRef = useRef(0)
 
   const [status,          setStatus]          = useState<FaceStatus>('loading_models')
   const [error,           setError]           = useState<string | null>(null)
@@ -98,6 +106,8 @@ export function useFaceDetection(): UseFaceDetectionReturn {
           faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
           faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
         ])
+        // Safe to create AFTER models are loaded
+        detectorOptionsRef.current = new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.4 })
         
         try {
           // Warm up face-api backend on a dummy canvas to prevent main thread blocking on first scan
@@ -133,19 +143,28 @@ export function useFaceDetection(): UseFaceDetectionReturn {
   /* ── Detection loop ── */
   const runLoop = useCallback(async () => {
     if (hasVerifiedRef.current || !streamRef.current) return
+
+    // Schedule next frame immediately so we don't skip frames
+    if (streamRef.current && !hasVerifiedRef.current) {
+      loopRef.current = requestAnimationFrame(() => { runLoopRef.current(); })
+    }
+
+    // Throttle detection to ~15fps to avoid GPU saturation
+    const now = performance.now()
+    if (now - lastFrameTimeRef.current < 66) return  // ~15fps = 66ms interval
+    lastFrameTimeRef.current = now
+
+    // Skip if a detection is already in flight
+    if (isDetectingRef.current) return
+
     const video   = videoRef.current
     const canvas  = canvasRef.current
 
-    if (!video || video.readyState < 2) {
-      if (streamRef.current && !hasVerifiedRef.current) {
-        loopRef.current = requestAnimationFrame(() => { runLoopRef.current(); })
-      }
-      return
-    }
-
-
+    if (!video || video.readyState < 2) return
+    if (!detectorOptionsRef.current) return
 
     if (canvas) {
+      isDetectingRef.current = true
       if (faceapi.tf) faceapi.tf.engine().startScope()
       try {
         const displaySize = { width: video.videoWidth, height: video.videoHeight }
@@ -157,7 +176,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
 
         // Run full face detection pipeline
         const detections = await faceapi
-          .detectAllFaces(video, DETECTOR_OPTIONS)
+          .detectAllFaces(video, detectorOptionsRef.current)
           .withFaceLandmarks()
           .withFaceDescriptors()
 
@@ -274,11 +293,8 @@ export function useFaceDetection(): UseFaceDetectionReturn {
         console.error('[BioFacial] Error en frame de detección (BodeUnerg):', err)
       } finally {
         if (faceapi.tf) faceapi.tf.engine().endScope()
+        isDetectingRef.current = false
       }
-    }
-
-    if (streamRef.current && !hasVerifiedRef.current) {
-      loopRef.current = requestAnimationFrame(() => { runLoopRef.current(); })
     }
   }, [])
 
