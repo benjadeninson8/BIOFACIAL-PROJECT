@@ -87,12 +87,15 @@ async function clearDatabase() {
   lastCacheFetch = 0;
 }
 
-// Helper to compute Euclidean Distance
+// Helper to compute Euclidean Distance between two 128-element face descriptors
+// Face-api.js recommendation: distance < 0.45 = same person, > 0.6 = different person
 function getEuclideanDistance(a, b) {
   if (!a || !b || a.length !== b.length) return Infinity;
   let sum = 0;
   for (let i = 0; i < a.length; i++) {
-    const diff = a[i] - b[i];
+    // Coerce to float — MongoDB may return numeric strings in edge cases
+    const diff = parseFloat(a[i]) - parseFloat(b[i]);
+    if (isNaN(diff)) return Infinity;
     sum += diff * diff;
   }
   return Math.sqrt(sum);
@@ -140,8 +143,11 @@ app.post('/api/users/register', async (req, res) => {
 });
 
 // Verify/match face descriptor
+// SECURITY: threshold is server-side constant only — never trust client input for this
+const VERIFY_THRESHOLD = 0.45; // face-api.js: < 0.45 = same person (strict), 0.6+ = permissive (insecure)
+
 app.post('/api/users/verify', async (req, res) => {
-  const { descriptor, threshold = 0.6 } = req.body;
+  const { descriptor } = req.body;
 
   if (!descriptor || !Array.isArray(descriptor) || descriptor.length !== 128) {
     return res.status(400).json({
@@ -170,9 +176,9 @@ app.post('/api/users/verify', async (req, res) => {
       }
     }
 
-    console.log(`[BioFacial] Comparación - Distancia mínima: ${minDistance.toFixed(4)} contra ${bestMatch ? bestMatch.nombres : 'ninguno'}`);
+    console.log(`[BioFacial] Comparación - Distancia mínima: ${minDistance.toFixed(4)} contra ${bestMatch ? bestMatch.nombres : 'ninguno'} (umbral: ${VERIFY_THRESHOLD})`);
 
-    if (minDistance < threshold && bestMatch) {
+    if (minDistance < VERIFY_THRESHOLD && bestMatch) {
       const { descriptor, ...userWithoutDescriptor } = bestMatch;
       return res.json({
         success: true,
