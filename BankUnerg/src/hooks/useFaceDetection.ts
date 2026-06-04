@@ -80,10 +80,17 @@ export function useFaceDetection(): UseFaceDetectionReturn {
                 console.warn(`[BioFacial] No se pudo configurar la flag ${flag}:`, e);
               }
             };
-            setSafe('WEBGL_DELETE_TEXTURE_THRESHOLD', 0);
-            setSafe('WEBGL_FORCE_F16_TEXTURES', true);
+            const isApple = /Mac|iPhone|iPad|iPod/i.test(navigator.userAgent) || 
+                            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            if (isApple) {
+              setSafe('WEBGL_DELETE_TEXTURE_THRESHOLD', 0);
+              setSafe('WEBGL_FORCE_F16_TEXTURES', true);
+              console.log('[BioFacial] Dispositivo Apple detectado. Optimizaciones de memoria WebGL aplicadas.');
+            } else {
+              console.log('[BioFacial] Dispositivo no Apple. Utilizando configuración WebGL predeterminada.');
+            }
           }
-          console.log('[BioFacial] Entorno de TensorFlow.js optimizado (BankUnerg).')
+          console.log('[BioFacial] Entorno de TensorFlow.js verificado (BankUnerg).')
         }
 
         await Promise.all([
