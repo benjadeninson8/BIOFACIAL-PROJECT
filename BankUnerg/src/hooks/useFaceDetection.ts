@@ -67,6 +67,8 @@ export function useFaceDetection(): UseFaceDetectionReturn {
   const [faceDescriptor,  setFaceDescriptor]  = useState<number[] | null>(null)
   const [isRunning,       setIsRunning]       = useState(false)
   const [modelsReady,     setModelsReady]     = useState(false)
+  // true once landmark + recognition models finish loading (needed for descriptors)
+  const heavyModelsReadyRef = useRef(false)
 
   /* ── Load models once ── */
   useEffect(() => {
@@ -101,37 +103,44 @@ export function useFaceDetection(): UseFaceDetectionReturn {
           console.log('[BioFacial] Entorno de TensorFlow.js verificado (BankUnerg).')
         }
 
-        await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-        ])
+        // ── PHASE 1: Load tiny detector only (193 KB) ──
+        // Camera becomes available immediately after this — ~0.5s on fast connections
+        await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL)
 
-        // Use smaller inputSize on Apple to reduce GPU shader compilation time (~40% faster)
         const isAppleDevice = /Mac|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
                               (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
         const inputSize = isAppleDevice ? 128 : 160
         detectorOptionsRef.current = new faceapi.TinyFaceDetectorOptions({ inputSize, scoreThreshold: 0.4 })
 
-        // Mark models as ready IMMEDIATELY so the user can start the camera now.
-        // The warmup (WebGL shader compilation) runs in the background — it's non-blocking.
+        // Camera is ready — let the user start immediately
         if (mounted) {
           setModelsReady(true)
           setStatus('idle')
           setError(null)
-          console.log(`[BioFacial] Modelos listos (inputSize=${inputSize}). Calentando WebGL en segundo plano...`)
+          console.log(`[BioFacial] Detector listo (${inputSize}px). Cargando modelos pesados en segundo plano...`)
         }
 
-        // Fire-and-forget warmup: compiles WebGL shaders while user reads the UI
+        // ── PHASE 2: Load heavy models in background (landmark 357KB + recognition 6.4MB) ──
+        // These are needed to compute the 128-value face descriptor for verification.
+        // The detection loop will show bounding boxes during this phase but won't verify yet.
         ;(async () => {
           try {
-            const dummy = document.createElement('canvas')
-            dummy.width = inputSize
-            dummy.height = Math.round(inputSize * 0.75)
-            await faceapi.detectAllFaces(dummy, new faceapi.TinyFaceDetectorOptions({ inputSize }))
-            console.log('[BioFacial] WebGL pre-calentado con éxito (BankUnerg).')
-          } catch (warmupErr) {
-            console.warn('[BioFacial] Pre-calentamiento no crítico omitido:', warmupErr)
+            await Promise.all([
+              faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+              faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+            ])
+            heavyModelsReadyRef.current = true
+            console.log('[BioFacial] Modelos de reconocimiento listos. Verificación completa activada.')
+            // Fire-and-forget warmup with full pipeline
+            try {
+              const dummy = document.createElement('canvas')
+              dummy.width = inputSize
+              dummy.height = Math.round(inputSize * 0.75)
+              await faceapi.detectAllFaces(dummy, new faceapi.TinyFaceDetectorOptions({ inputSize }))
+                .withFaceLandmarks().withFaceDescriptors()
+            } catch { /* non-critical */ }
+          } catch (err) {
+            console.warn('[BioFacial] Error cargando modelos pesados (reintentar al actualizar):', err)
           }
         })()
       } catch (err) {
@@ -182,11 +191,21 @@ export function useFaceDetection(): UseFaceDetectionReturn {
           canvas.style.removeProperty('height')
         }
 
-        // Run full face detection pipeline
-        const detections = await faceapi
-          .detectAllFaces(video, detectorOptionsRef.current)
-          .withFaceLandmarks()
-          .withFaceDescriptors()
+        // Run face detection pipeline
+        // If heavy models (landmark + recognition) are ready, run full pipeline for descriptor.
+        // Otherwise run detection-only to show bounding box while models still loading.
+        let detections
+        if (heavyModelsReadyRef.current) {
+          detections = await faceapi
+            .detectAllFaces(video, detectorOptionsRef.current)
+            .withFaceLandmarks()
+            .withFaceDescriptors()
+        } else {
+          // Lightweight detection only — shows face box, can't verify yet
+          const rawDetections = await faceapi.detectAllFaces(video, detectorOptionsRef.current)
+          // Wrap in compatible shape so the rest of the loop works without changes
+          detections = rawDetections.map(d => ({ detection: d, landmarks: { positions: [] }, descriptor: null }))
+        }
 
         // Check if camera was stopped during the await
         if (!streamRef.current) return
