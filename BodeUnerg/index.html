@@ -5,9 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BodeUnerg — Sistema de Autopago</title>
     <meta name="description" content="Sistema de autopago para kiosco BodeUnerg — UNERG Finanzas" />
+
+    <!-- Preload face-api.js model files so the browser fetches them in parallel
+         with JS parsing, not sequentially after React mounts. -->
+    <link rel="preload" as="fetch" crossorigin href="/models/tiny_face_detector_model-weights_manifest.json" />
+    <link rel="preload" as="fetch" crossorigin href="/models/tiny_face_detector_model-shard1" />
+    <link rel="preload" as="fetch" crossorigin href="/models/face_landmark_68_model-weights_manifest.json" />
+    <link rel="preload" as="fetch" crossorigin href="/models/face_landmark_68_model-shard1" />
+    <link rel="preload" as="fetch" crossorigin href="/models/face_recognition_model-weights_manifest.json" />
+    <link rel="preload" as="fetch" crossorigin href="/models/face_recognition_model-shard1" />
+    <link rel="preload" as="fetch" crossorigin href="/models/face_recognition_model-shard2" />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {})
+        })
+      }
+    </script>
   </body>
 </html>
