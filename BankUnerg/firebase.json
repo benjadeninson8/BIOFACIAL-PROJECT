@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "site": "biofacial-81dbf",
+    "site": "bank-unerg",
     "public": "dist",
     "ignore": [
       "firebase.json",
