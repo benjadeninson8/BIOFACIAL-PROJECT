@@ -18,6 +18,9 @@ if (!MONGODB_URI) {
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Confiar en el proxy de Railway para que el Rate Limiter lea bien las IPs
+app.set('trust proxy', 1);
+
 // ==========================================
 // BLINDAJE DE SEGURIDAD (PRAGMA STUDIO)
 // ==========================================
