@@ -619,9 +619,14 @@ export default function App() {
           )}
         </AnimatePresence>
 
-        <p className="text-center text-gray-300 text-xs mt-6">
-          Universidad Nacional Experimental Rómulo Gallegos · Finanzas Digitales
-        </p>
+        <div className="text-center mt-8 pb-4">
+          <p className="text-gray-300 text-xs font-semibold uppercase tracking-wider mb-1">
+            Diseñado y desarrollado por PRAGMA STUDIO
+          </p>
+          <p className="text-gray-400 text-[10px]">
+            &copy; {new Date().getFullYear()} PRAGMA STUDIO. Se reserva el derecho de autor. Todos los derechos reservados.
+          </p>
+        </div>
       </div>
     </div>
   )

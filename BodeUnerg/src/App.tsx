@@ -675,6 +675,16 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Footer Pragma Studio */}
+      <div className="absolute bottom-2 right-4 md:right-6 text-right z-30 pointer-events-none opacity-60">
+        <p className="text-gray-500 text-[9px] font-bold uppercase tracking-widest">
+          Diseñado y desarrollado por PRAGMA STUDIO
+        </p>
+        <p className="text-gray-400 text-[8px]">
+          &copy; {new Date().getFullYear()} PRAGMA STUDIO. Se reserva el derecho de autor.
+        </p>
+      </div>
     </div>
   )
 }

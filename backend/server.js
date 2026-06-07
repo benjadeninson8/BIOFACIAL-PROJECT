@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { MongoClient } from 'mongodb';
 
 // Ensure MONGODB_URI is provided
@@ -15,6 +17,20 @@ if (!MONGODB_URI) {
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// ==========================================
+// BLINDAJE DE SEGURIDAD (PRAGMA STUDIO)
+// ==========================================
+// 1. Cabeceras HTTP seguras (anti-XSS, anti-clickjacking)
+app.use(helmet());
+
+// 2. Rate limiting (Prevención de ataques DDoS y fuerza bruta)
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 150, // Límite de 150 peticiones por IP
+  message: { success: false, message: 'Se ha detectado tráfico inusual. Por seguridad, intente más tarde.' }
+});
+app.use('/api/', apiLimiter);
 
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); // Allow larger payloads for descriptors
