@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  ShoppingCart, X, CheckCircle, Scan, CreditCard,
+  ShoppingCart, CheckCircle, Scan, CreditCard,
   ChevronRight, Wifi, Shield, ArrowLeft, Banknote, Package, QrCode,
   Smartphone
 } from 'lucide-react'
@@ -150,12 +150,7 @@ export default function App() {
   const blurBg = modal !== 'closed'
 
   return (
-    <div className="min-h-screen md:h-screen md:overflow-hidden flex flex-col relative"
-      style={{
-        background: 'radial-gradient(ellipse at 20% 0%,rgba(37,99,235,0.08) 0%,transparent 55%),'
-          + 'radial-gradient(ellipse at 85% 100%,rgba(96,165,250,0.07) 0%,transparent 50%),'
-          + '#f0f4fb',
-      }}>
+    <div className="min-h-screen md:h-screen md:overflow-hidden flex flex-col relative bg-slate-50">
 
       <ConfettiBlast trigger={confetti} />
 
@@ -167,8 +162,7 @@ export default function App() {
 
       {/* ── Header ── */}
       <motion.header
-        className="surface-strong flex-shrink-0 z-10 sticky top-0"
-        style={{ borderBottom: '1px solid rgba(37,99,235,0.08)' }}
+        className="bg-white/80 backdrop-blur-xl flex-shrink-0 z-10 sticky top-0 border-b border-slate-200"
         animate={blurBg ? { filter: 'blur(4px)', opacity: 0.5 } : { filter: 'blur(0)', opacity: 1 }}
         transition={{ duration: 0.3 }}
       >
@@ -205,15 +199,16 @@ export default function App() {
         {/* Desktop header */}
         <div className="hidden md:flex items-center justify-between px-10 py-4">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
-              style={{ background: 'linear-gradient(135deg,#2563eb,#1d4ed8)', boxShadow: '0 4px 16px rgba(37,99,235,0.3)' }}>
-              <ShoppingCart size={22} className="text-white" />
+            <div className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-slate-200 flex items-center justify-center">
+              <Package size={24} className="text-blue-600" />
             </div>
             <div>
-              <p className="text-gray-400 text-[10px] tracking-[0.25em] uppercase font-medium">Sistema de Autopago</p>
-              <h1 className="font-display font-bold text-2xl leading-tight text-gray-900">
-                BODE<span className="text-gradient-blue">UNERG</span>
+              <h1 className="font-display font-bold text-2xl tracking-tight text-slate-900">
+                Bode<span className="text-blue-600">UNERG</span>
               </h1>
+              <p className="text-slate-500 text-xs font-medium uppercase tracking-widest mt-0.5">
+                Punto de Venta Biométrico
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-6">
@@ -290,9 +285,9 @@ export default function App() {
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${activeCategory === cat
-                    ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
-                    : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
+                  className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${activeCategory === cat
+                    ? 'bg-slate-900 border-slate-900 text-white shadow-md'
+                    : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700'
                     }`}
                 >
                   {cat}
@@ -306,13 +301,12 @@ export default function App() {
             {filteredCatalog.map(item => {
               const qtyInCart = products.find(p => p.id === item.id)?.qty || 0;
               return (
-                <motion.div
+                <motion.button
                   key={item.id}
-                  className="rounded-2xl p-4 bg-white border border-gray-100 flex flex-col gap-3 relative transition-all"
-                  style={{
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.02)',
-                  }}
-                  whileHover={{ y: -2, boxShadow: '0 8px 24px rgba(37,99,235,0.06)' }}
+                  className="group relative bg-white rounded-2xl p-4 border border-slate-200/60 shadow-sm flex flex-col items-center gap-3 cursor-pointer hover:shadow-lg transition-all"
+                  whileHover={{ y: -4 }}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => handleAddToCart(item)}
                 >
                   {qtyInCart > 0 && (
                     <motion.span
@@ -324,7 +318,7 @@ export default function App() {
                     </motion.span>
                   )}
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between w-full">
                     <div
                       className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
                       style={{ background: `${item.accent}15` }}
@@ -337,19 +331,11 @@ export default function App() {
                     </span>
                   </div>
 
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-950 text-sm leading-tight line-clamp-1">{item.name}</h3>
-                    <p className="font-display font-bold text-gray-800 text-base mt-1">${item.price.toFixed(2)}</p>
+                  <div className="text-center">
+                    <p className="font-semibold text-sm text-slate-800 line-clamp-1">{item.name}</p>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">${item.price.toFixed(2)}</p>
                   </div>
-
-                  <motion.button
-                    onClick={() => handleAddToCart(item)}
-                    className="w-full py-2 rounded-xl border border-blue-100 text-blue-600 text-xs font-bold bg-blue-50/50 hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all flex items-center justify-center gap-1"
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <span>+ Agregar</span>
-                  </motion.button>
-                </motion.div>
+                </motion.button>
               );
             })}
           </div>
@@ -357,46 +343,56 @@ export default function App() {
 
         {/* ── SECCIÓN DERECHA: Carrito de Compras ── */}
         <div className={`flex-1 flex flex-col md:w-[42%] md:min-h-0 ${mobileTab === 'cart' ? 'flex' : 'hidden md:flex'}`}>
-          {/* Column labels — desktop only */}
-          <div className="hidden md:block px-6 pt-5 pb-2 flex-shrink-0">
-            <div className="grid items-center gap-3" style={{ gridTemplateColumns: '60px 1fr auto auto' }}>
-              <span />
-              <span className="text-gray-400 text-xs uppercase tracking-widest font-medium pl-1">Producto</span>
-              <span className="text-gray-400 text-xs uppercase tracking-widest font-medium text-center w-20">Cant.</span>
-              <span className="text-gray-400 text-xs uppercase tracking-widest font-medium text-right w-20">Total</span>
+          <div className="hidden md:flex items-center justify-between px-6 pt-5 pb-2">
+            <span className="text-slate-400 text-xs uppercase tracking-widest font-bold">Carrito de Compras</span>
+            <div className="w-8 h-8 flex items-center justify-center bg-slate-100 rounded-lg">
+                <ShoppingCart size={14} className="text-slate-700" />
             </div>
           </div>
 
-          {/* Product list */}
-          <div className="flex-1 overflow-y-auto px-4 md:px-6 pb-4 flex flex-col gap-2 md:min-h-0 pt-3 md:pt-0">
-            <AnimatePresence mode="popLayout">
-              {products.length === 0
-                ? <EmptyCart key="empty" />
-                : products.map(p => <ProductRow key={p.id} p={p} onQty={updateQty} />)
-              }
-            </AnimatePresence>
-          </div>
-
-          {/* ── Summary + Pay — sticky on mobile, fixed footer on desktop ── */}
-          <div className="sticky bottom-0 md:relative surface-strong flex-shrink-0 px-4 md:px-6 py-3"
-            style={{ borderTop: '1px solid rgba(37,99,235,0.08)' }}>
-
-            {/* Summary rows */}
-            <div className="flex flex-col gap-1 mb-3">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-400 text-xs">Subtotal <span className="text-gray-300">({itemCount} art.)</span></span>
-                <SpringCounter value={subtotal} className="text-gray-700 text-sm font-semibold tabular-nums" />
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-400 text-xs">IVA (16%)</span>
-                <SpringCounter value={iva} className="text-gray-400 text-xs tabular-nums" />
-              </div>
-              <div className="h-px bg-gray-100 my-1" />
-              <div className="flex justify-between items-center">
-                <span className="text-gray-800 font-bold text-base">TOTAL</span>
-                <SpringCounter value={total} className="font-display font-bold text-2xl text-gradient-blue tabular-nums" />
-              </div>
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6 flex flex-col gap-3">
+              <AnimatePresence mode="popLayout">
+                {products.length === 0
+                  ? <EmptyCart key="empty" />
+                  : products.map(p => (
+                  <motion.div key={p.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}>
+                    <ProductRow
+                      p={p}
+                      onQty={updateQty}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
+
+          {/* ── Summary + Pay ── */}
+          <div className="surface-strong p-5 md:p-6 md:border-t-0 md:rounded-3xl md:m-4 flex flex-col gap-4">
+              {/* Summary */}
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-between text-sm font-medium text-slate-500">
+                  <span>Subtotal</span>
+                  <span>${subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm font-medium text-slate-500">
+                  <span>IVA (16%)</span>
+                  <span>${iva.toFixed(2)}</span>
+                </div>
+                <div className="w-full h-px bg-slate-200 my-1" />
+                <div className="flex justify-between items-end">
+                  <span className="text-slate-900 font-bold">Total a Pagar</span>
+                  <div className="text-right">
+                    <span className="text-2xl font-display font-bold text-blue-600">
+                      $<SpringCounter value={total} />
+                    </span>
+                    <p className="text-[10px] text-slate-400 font-medium tracking-wide uppercase mt-0.5">
+                      {itemCount} {itemCount === 1 ? 'artículo' : 'artículos'}
+                    </p>
+                  </div>
+                </div>
+              </div>
 
             <motion.button className="pay-btn" onClick={openPay} disabled={products.length === 0}
               whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}>
@@ -421,12 +417,9 @@ export default function App() {
 
             <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center md:p-8 pointer-events-none">
               <motion.div
-                className="pointer-events-auto relative overflow-hidden w-full md:rounded-3xl rounded-t-3xl"
+                className="pointer-events-auto relative overflow-hidden w-full md:rounded-3xl rounded-t-3xl bg-white shadow-2xl"
                 style={{
                   maxWidth: modal === 'facial' ? '500px' : '480px',
-                  background: 'rgba(255,255,255,0.98)',
-                  border: '1px solid rgba(37,99,235,0.12)',
-                  boxShadow: '0 -8px 40px rgba(37,99,235,0.1), 0 24px 60px rgba(37,99,235,0.15)',
                   maxHeight: '92vh',
                   overflowY: 'auto',
                 }}
@@ -440,10 +433,7 @@ export default function App() {
                   <div className="w-10 h-1 rounded-full bg-gray-200" />
                 </div>
 
-                {/* Blue stripe */}
-                <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg,#2563eb,#60a5fa,#2563eb)' }} />
-
-                <div className="p-5 md:p-7">
+                <div className="p-5 md:p-8 flex flex-col gap-6">
                   <AnimatePresence mode="wait">
 
                     {/* ── Method selection ── */}
@@ -451,24 +441,15 @@ export default function App() {
                       <motion.div key="select"
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
 
-                        <div className="flex items-start justify-between mb-4">
-                          <div>
-                            <p className="text-gray-400 text-[10px] uppercase tracking-[0.2em] font-semibold mb-0.5">Checkout Seguro</p>
-                            <h2 className="font-display font-bold text-xl text-gray-900">Método de Pago</h2>
-                            <p className="text-gray-400 text-sm mt-0.5">
-                              Total: <span className="text-blue-700 font-bold">${total.toFixed(2)}</span>
-                            </p>
-                          </div>
-                          <motion.button
-                            className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-700 transition-colors"
-                            style={{ background: '#f3f4f6', border: '1px solid #e5e7eb' }}
-                            whileTap={{ scale: 0.9 }} onClick={closeAll}>
-                            <X size={15} />
-                          </motion.button>
+                        <div className="text-center">
+                          <h2 className="font-display font-bold text-2xl text-slate-900">Método de Pago</h2>
+                          <p className="text-slate-500 text-sm mt-1">
+                            Selecciona cómo desea procesar el pago de <span className="font-semibold text-slate-800">${total.toFixed(2)}</span>
+                          </p>
                         </div>
 
                         {/* 2×2 grid */}
-                        <div className="grid grid-cols-2 gap-2.5 mb-4">
+                        <div className="grid grid-cols-2 gap-2.5 mb-4 mt-6">
                           {METHODS.map((m, i) => {
                             const Icon = m.icon
                             const isSel = selected === m.id
@@ -486,12 +467,8 @@ export default function App() {
                                     <CheckCircle size={12} className="text-white" strokeWidth={2.5} />
                                   </motion.div>
                                 )}
-                                {m.featured && !isSel && (
-                                  <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
-                                    style={{ background: '#dbeafe', color: '#1d4ed8' }}>Principal</div>
-                                )}
 
-                                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-0.5 transition-all duration-200"
+                                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-2 transition-all duration-200"
                                   style={m.featured ? {
                                     background: isSel ? '#1d4ed8' : 'linear-gradient(135deg,#2563eb,#1d4ed8)',
                                     boxShadow: '0 4px 14px rgba(37,99,235,0.3)',
@@ -501,8 +478,10 @@ export default function App() {
                                   }}>
                                   <Icon size={22} strokeWidth={1.6} className={m.featured || isSel ? 'text-white' : 'text-blue-500'} />
                                 </div>
-                                <p className={`font-semibold text-xs leading-tight ${isSel || m.featured ? 'text-blue-800' : 'text-gray-700'}`}>{m.label}</p>
-                                <p className="text-gray-400 text-[10px] mt-0.5 leading-tight">{m.sub}</p>
+                                <div className="font-semibold text-sm text-slate-900">{m.label}</div>
+                                <div className={`text-[10px] ${selected === m.id ? 'text-blue-600' : 'text-slate-500'}`}>
+                                  {m.sub}
+                                </div>
                               </motion.button>
                             )
                           })}
@@ -549,46 +528,46 @@ export default function App() {
                         initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }}
                         transition={{ type: 'spring', stiffness: 260, damping: 20 }}>
 
-                        <motion.div className="w-18 h-18 w-[72px] h-[72px] rounded-full flex items-center justify-center"
-                          style={{ background: 'linear-gradient(135deg,#059669,#10b981)', boxShadow: '0 0 32px rgba(16,185,129,0.35)' }}
+                        <motion.div className="w-[72px] h-[72px] rounded-full flex items-center justify-center border border-emerald-500/30"
+                          style={{ background: 'rgba(16, 185, 129, 0.1)', boxShadow: '0 0 32px rgba(16,185,129,0.2)' }}
                           initial={{ scale: 0 }} animate={{ scale: 1 }}
                           transition={{ type: 'spring', stiffness: 280, damping: 18, delay: 0.1 }}>
-                          <CheckCircle size={36} className="text-white" strokeWidth={2} />
+                          <CheckCircle size={36} className="text-emerald-500" strokeWidth={2} />
                         </motion.div>
 
                         <div>
-                          <h3 className="font-display font-bold text-2xl text-gray-900">¡Pago Exitoso!</h3>
+                          <h3 className="font-display font-bold text-2xl text-slate-900">¡Pago Exitoso!</h3>
                           {verifiedUser ? (
-                            <p className="text-gray-400 text-sm mt-1">
+                            <p className="text-slate-500 text-sm mt-1">
                               Bienvenido, <span className="text-blue-600 font-semibold">{verifiedUser.nombres} {verifiedUser.apellidos}</span>
                             </p>
                           ) : (
-                            <p className="text-gray-400 text-sm mt-1">Transacción procesada de forma segura.</p>
+                            <p className="text-slate-500 text-sm mt-1">Transacción procesada de forma segura.</p>
                           )}
                         </div>
 
-                        <div className="w-full rounded-2xl p-4 text-left" style={{ background: '#f8faff', border: '1px solid #e5edff' }}>
+                        <div className="w-full rounded-2xl p-4 text-left bg-slate-50 border border-slate-200">
                           <div className="flex justify-between items-center mb-2">
-                            <span className="text-gray-400 text-xs uppercase tracking-widest font-medium">Monto</span>
-                            <span className="text-gray-900 font-bold text-lg">${total.toFixed(2)}</span>
+                            <span className="text-slate-500 text-xs uppercase tracking-widest font-medium">Monto</span>
+                            <span className="text-slate-900 font-bold text-lg">${total.toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between items-center mb-2">
-                            <span className="text-gray-400 text-xs uppercase tracking-widest font-medium">Método</span>
-                            <span className="text-blue-700 text-sm font-semibold">{paidWith}</span>
+                            <span className="text-slate-500 text-xs uppercase tracking-widest font-medium">Método</span>
+                            <span className="text-blue-600 text-sm font-semibold">{paidWith}</span>
                           </div>
                           {verifiedUser && (
                             <div className="flex justify-between items-center mb-2">
-                              <span className="text-gray-400 text-xs uppercase tracking-widest font-medium">ID Usuario</span>
-                              <span className="font-mono text-gray-700 text-xs font-semibold">{verifiedUser.id}</span>
+                              <span className="text-slate-500 text-xs uppercase tracking-widest font-medium">ID Usuario</span>
+                              <span className="font-mono text-slate-700 text-xs font-semibold">{verifiedUser.id}</span>
                             </div>
                           )}
                           <div className="flex justify-between items-center">
-                            <span className="text-gray-400 text-xs uppercase tracking-widest font-medium">Ref.</span>
-                            <span className="font-mono text-gray-500 text-xs">{payRef}</span>
+                            <span className="text-slate-500 text-xs uppercase tracking-widest font-medium">Ref.</span>
+                            <span className="font-mono text-slate-400 text-xs">{payRef}</span>
                           </div>
                         </div>
 
-                        <motion.p className="text-gray-300 text-xs"
+                        <motion.p className="text-slate-400 text-xs mt-2"
                           animate={{ opacity: [1, 0.4, 1] }} transition={{ duration: 1.5, repeat: Infinity }}>
                           Cerrando automáticamente...
                         </motion.p>
@@ -612,7 +591,7 @@ export default function App() {
       )}
 
       {/* Footer Pragma Studio */}
-      <div className="absolute bottom-2 right-4 md:right-6 text-right z-30 pointer-events-none opacity-60">
+      <div className="hidden md:block absolute bottom-2 right-4 md:right-6 text-right z-30 pointer-events-none opacity-60">
         <p className="text-gray-500 text-[9px] font-bold uppercase tracking-widest">
           Diseñado y desarrollado por PRAGMA STUDIO
         </p>

@@ -75,6 +75,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
     ;(async () => {
       try {
         // Optimize TF.js environment to prevent memory leaks and WebGL crashes on Apple devices
+        // Optimize TF.js environment to prevent memory leaks and WebGL crashes
         if (faceapi.tf) {
           const env = typeof faceapi.tf.env === 'function' ? faceapi.tf.env() : (faceapi.tf as any).ENV;
           if (env) {
@@ -89,13 +90,12 @@ export function useFaceDetection(): UseFaceDetectionReturn {
                 console.warn(`[BioFacial] No se pudo configurar la flag ${flag}:`, e);
               }
             };
-            // Aplicar optimizaciones WebGL para TODOS los dispositivos (especialmente Windows tras suspender)
+            // Aplicar optimizaciones WebGL para TODOS los dispositivos
             setSafe('WEBGL_DELETE_TEXTURE_THRESHOLD', 0);
             setSafe('WEBGL_FORCE_F16_TEXTURES', true);
-            setSafe('WEBGL_PACK', false); // <- PREVIENE EL CONGELAMIENTO EN WINDOWS AL VOLVER DE SUSPENSIÓN
-            console.log('[BioFacial] Optimizaciones extremas de WebGL aplicadas para prevenir congelamiento.');
+            setSafe('WEBGL_PACK', false); // Previene congelamiento en Windows
+            console.log('[BioFacial] Optimizaciones extremas de WebGL aplicadas.');
           }
-          console.log('[BioFacial] Entorno de TensorFlow.js verificado (BodeUnerg).')
         }
 
         // ── PHASE 1: tiny detector only (193 KB) ── camera ready fast
@@ -243,62 +243,54 @@ export function useFaceDetection(): UseFaceDetectionReturn {
 
             /* ── Draw overlay ── */
 
-            // Bounding box glow
-            const glowColor = pct >= 100 ? '#00e5ff' : '#2563eb'
-            ctx.shadowColor = glowColor
-            ctx.shadowBlur  = 16
-            ctx.strokeStyle = glowColor
-            ctx.lineWidth   = 2.5
-            ctx.strokeRect(box.x, box.y, box.width, box.height)
-            ctx.shadowBlur  = 0
-
-            // Landmark dots
-            const pts = d.landmarks.positions
-            pts.forEach((p) => {
+            // Premium Face ID Bounding Box
+            const boxColor = pct >= 100 ? '#00ffcc' : '#3b82f6'
+            
+            // Corner brackets (Sleek)
+            const bLen = 24
+            ctx.strokeStyle = boxColor
+            ctx.lineWidth   = 3
+            ctx.lineCap = 'round'
+            ctx.lineJoin = 'round'
+            ctx.shadowColor = boxColor
+            ctx.shadowBlur  = pct >= 100 ? 15 : 8
+            
+            const corner = (x: number, y: number, dx: number, dy: number) => {
               ctx.beginPath()
-              ctx.arc(p.x, p.y, 2, 0, Math.PI * 2)
-              ctx.fillStyle = pct >= 100 ? 'rgba(0,229,255,0.9)' : 'rgba(37,99,235,0.85)'
-              ctx.fill()
-            })
-
-            // Confidence arc on top of bounding box
-            if (pct < 100) {
-              const cx = box.x + box.width / 2
-              const cy = box.y - 14
-              const r  = 10
-              ctx.strokeStyle = 'rgba(255,255,255,0.15)'
-              ctx.lineWidth   = 3
-              ctx.beginPath()
-              ctx.arc(cx, cy, r, -Math.PI / 2, Math.PI * 1.5)
+              ctx.moveTo(x + dx * bLen, y); ctx.lineTo(x, y); ctx.lineTo(x, y + dy * bLen)
               ctx.stroke()
+            }
+            corner(box.x,             box.y,              1,  1)
+            corner(box.x + box.width, box.y,             -1,  1)
+            corner(box.x,             box.y + box.height, 1, -1)
+            corner(box.x + box.width, box.y + box.height,-1, -1)
+            ctx.shadowBlur = 0
 
-              ctx.strokeStyle = '#00e5ff'
-              ctx.shadowColor = '#00e5ff'
-              ctx.shadowBlur  = 6
+            // Animated Scanner Line
+            if (pct < 100) {
+              const time = performance.now() / 1000
+              // Oscillates between 0 and 1
+              const sweepY = (Math.sin(time * 3) + 1) / 2
+              const lineY = box.y + (box.height * sweepY)
+              
               ctx.beginPath()
-              ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * pct) / 100)
+              ctx.moveTo(box.x, lineY)
+              ctx.lineTo(box.x + box.width, lineY)
+              ctx.strokeStyle = 'rgba(59, 130, 246, 0.8)'
+              ctx.lineWidth = 2
+              ctx.shadowColor = '#3b82f6'
+              ctx.shadowBlur = 10
               ctx.stroke()
               ctx.shadowBlur = 0
             }
 
-            // Corner brackets
-            const bLen = 20
-            ctx.strokeStyle = pct >= 100 ? '#00e5ff' : 'rgba(37,99,235,0.8)'
-            ctx.lineWidth   = 3
-            ctx.shadowColor = pct >= 100 ? '#00e5ff' : '#2563eb'
-            ctx.shadowBlur  = pct >= 100 ? 12 : 6
-            const drawCorner = (x: number, y: number, dx: number, dy: number) => {
-              ctx.beginPath()
-              ctx.moveTo(x + dx * bLen, y)
-              ctx.lineTo(x, y)
-              ctx.lineTo(x, y + dy * bLen)
-              ctx.stroke()
-            }
-            drawCorner(box.x,              box.y,              1,  1)
-            drawCorner(box.x + box.width,  box.y,             -1,  1)
-            drawCorner(box.x,              box.y + box.height, 1, -1)
-            drawCorner(box.x + box.width,  box.y + box.height,-1, -1)
-            ctx.shadowBlur = 0
+            // Subtle glow around the face center instead of dots
+            ctx.beginPath()
+            ctx.arc(box.x + box.width / 2, box.y + box.height / 2, box.width * 0.35, 0, Math.PI * 2)
+            ctx.fillStyle = pct >= 100 ? 'rgba(0, 255, 204, 0.1)' : 'rgba(59, 130, 246, 0.05)'
+            ctx.fill()
+
+
           }
         }
       } catch (err) {

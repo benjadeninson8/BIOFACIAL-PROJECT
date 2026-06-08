@@ -10,8 +10,8 @@
 
   body {
     font-family: 'Inter', system-ui, sans-serif;
-    background: #f0f4fb;
-    color: #111827;
+    background: #f8fafc; /* Crisp slate white */
+    color: #0f172a;
     -webkit-font-smoothing: antialiased;
     /* Allow scroll on mobile — kiosk handles its own overflow */
     overflow-y: auto;
@@ -27,18 +27,18 @@
 
   /* ── Surfaces ── */
   .surface {
-    background: rgba(255,255,255,0.75);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.9);
-    box-shadow: 0 2px 12px rgba(37,99,235,0.07), 0 1px 3px rgba(0,0,0,0.04);
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 1);
   }
   .surface-strong {
-    background: rgba(255,255,255,0.95);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(255,255,255,1);
-    box-shadow: 0 4px 24px rgba(37,99,235,0.08), 0 1px 4px rgba(0,0,0,0.05);
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+    border: 1px solid rgba(255, 255, 255, 1);
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06), 0 2px 8px rgba(15, 23, 42, 0.02), inset 0 1px 0 rgba(255, 255, 255, 1);
   }
 
   /* ── Product row — desktop grid ── */
@@ -47,13 +47,13 @@
     display: grid;
     grid-template-columns: 60px 1fr auto auto;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.875rem 1.25rem;
-    border-radius: 16px;
-    background: rgba(255,255,255,0.85);
-    border: 1px solid rgba(37,99,235,0.07);
-    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-    transition: background 0.2s, box-shadow 0.2s, border-color 0.2s;
+    gap: 0.85rem;
+    padding: 1rem 1.25rem;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   /* ── Product row — mobile: 2-row stacked layout ── */
@@ -82,8 +82,9 @@
 
   @media (min-width: 768px) {
     .product-row:hover {
-      background: rgba(255,255,255,0.98);
-      box-shadow: 0 4px 16px rgba(37,99,235,0.1);
+      background: #ffffff;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06), 0 2px 8px rgba(15, 23, 42, 0.04);
+      transform: translateY(-1px);
     }
     /* Hide mobile-only wrappers on desktop */
     .row-top, .row-bottom { display: contents; }
@@ -110,31 +111,31 @@
     display: flex; align-items: center; justify-content: center;
     gap: 0.625rem; width: 100%;
     padding: 0.85rem 1.5rem;
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    background: linear-gradient(135deg, #1d4ed8, #0f172a);
     color: #fff;
     font-family: 'Outfit', sans-serif;
     font-weight: 700; font-size: 1.05rem;
     letter-spacing: 0.05em;
-    border: none; border-radius: 14px; cursor: pointer;
-    box-shadow: 0 4px 20px rgba(37,99,235,0.35);
-    transition: all 0.25s; position: relative; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; cursor: pointer;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.3), inset 0 1px 1px rgba(255,255,255,0.15);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden;
   }
   .pay-btn::before {
     content: ''; position: absolute;
     top: 0; left: -100%; width: 100%; height: 100%;
-    background: linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);
+    background: linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);
     transition: left 0.5s;
   }
   .pay-btn:hover::before { left: 100%; }
-  .pay-btn:hover { background: linear-gradient(135deg,#1d4ed8,#1e40af); box-shadow: 0 6px 28px rgba(37,99,235,0.45); transform: translateY(-1px); }
+  .pay-btn:hover { background: linear-gradient(135deg,#1e40af,#0f172a); box-shadow: 0 12px 32px rgba(15, 23, 42, 0.4); transform: translateY(-2px); }
   .pay-btn:active { transform: translateY(0); }
   .pay-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 
   /* ── Modal backdrop ── */
   .modal-backdrop {
-    background: rgba(240,244,251,0.65);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
 
   /* ── Payment method tile (2x2 grid) ── */
@@ -144,18 +145,18 @@
     align-items: center; justify-content: center;
     gap: 0.5rem;
     padding: 1.125rem 0.75rem;
-    border-radius: 18px;
+    border-radius: 20px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border: 2px solid transparent;
     text-align: center; overflow: hidden;
   }
-  .method-tile.normal { background: #f8faff; border-color: #e5edff; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
-  .method-tile.normal:hover { background: #fff; border-color: #bfdbfe; box-shadow: 0 4px 16px rgba(37,99,235,0.1); }
-  .method-tile.normal.selected { background: #eff6ff; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
-  .method-tile.featured { background: linear-gradient(145deg,#eff6ff,#dbeafe); border-color: #93c5fd; box-shadow: 0 2px 12px rgba(37,99,235,0.12); }
-  .method-tile.featured:hover { background: linear-gradient(145deg,#dbeafe,#bfdbfe); border-color: #3b82f6; box-shadow: 0 4px 24px rgba(37,99,235,0.2); }
-  .method-tile.featured.selected { background: linear-gradient(145deg,#dbeafe,#93c5fd); border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37,99,235,0.15); }
+  .method-tile.normal { background: #f8fafc; border-color: #f1f5f9; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+  .method-tile.normal:hover { background: #fff; border-color: #cbd5e1; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08); transform: translateY(-1px); }
+  .method-tile.normal.selected { background: #eff6ff; border-color: #3b82f6; box-shadow: 0 0 0 4px rgba(59,130,246,0.1); }
+  .method-tile.featured { background: linear-gradient(145deg,#f8fafc,#f1f5f9); border-color: #cbd5e1; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06); }
+  .method-tile.featured:hover { background: #fff; border-color: #3b82f6; box-shadow: 0 8px 32px rgba(59,130,246,0.2); transform: translateY(-1px); }
+  .method-tile.featured.selected { background: linear-gradient(145deg,#eff6ff,#dbeafe); border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37,99,235,0.15); }
 
   /* ── Confirm button in modal ── */
   .confirm-btn {
@@ -174,7 +175,7 @@
 
 /* Gradient text */
 .text-gradient-blue {
-  background: linear-gradient(135deg,#1d4ed8,#2563eb);
+  background: linear-gradient(135deg,#0f172a,#3b82f6);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

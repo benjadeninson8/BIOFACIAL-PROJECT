@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  User, FileText, Camera, CheckCircle, AlertCircle,
+  User, FileText, CheckCircle, AlertCircle,
   ChevronRight, Loader2, X, Shield, Scan,
 } from 'lucide-react'
 import { useFaceDetection, type FaceStatus } from './hooks/useFaceDetection'
@@ -15,8 +15,8 @@ function StepBadge({ n, label, state }: { n: number; label: string; state: 'acti
   return (
     <div className="flex flex-col items-center gap-1.5">
       <motion.div
-        className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300 ${
-          state === 'active' ? 'step-active' : state === 'done' ? 'step-done' : 'step-idle'
+        className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300 border backdrop-blur-md ${
+          state === 'active' ? 'border-blue-500/50 bg-blue-500/10 text-blue-400' : state === 'done' ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400' : 'border-slate-700 bg-slate-800/50 text-slate-500'
         }`}
         animate={state === 'active' ? { scale: [1, 1.08, 1] } : { scale: 1 }}
         transition={{ repeat: state === 'active' ? Infinity : 0, duration: 2 }}
@@ -24,7 +24,7 @@ function StepBadge({ n, label, state }: { n: number; label: string; state: 'acti
         {state === 'done' ? <CheckCircle size={16} /> : n}
       </motion.div>
       <span className={`text-[11px] font-medium whitespace-nowrap ${
-        state === 'active' ? 'text-unerg-700' : state === 'done' ? 'text-unerg-500' : 'text-gray-400'
+        state === 'active' ? 'text-blue-400' : state === 'done' ? 'text-emerald-400' : 'text-slate-500'
       }`}>{label}</span>
     </div>
   )
@@ -51,14 +51,14 @@ function ValidatedInput({ label, placeholder, icon: Icon, value, onChange, valid
 
   return (
     <div>
-      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+      <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
         {label}
       </label>
       <div className="relative">
         <Icon
           size={16}
           className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors duration-200 ${
-            focused ? 'text-unerg-600' : showCheck ? 'text-emerald-500' : 'text-gray-300'
+            focused ? 'text-blue-400' : showCheck ? 'text-emerald-400' : 'text-slate-500'
           }`}
         />
         <input
@@ -117,15 +117,15 @@ function ValidatedInput({ label, placeholder, icon: Icon, value, onChange, valid
 
 /* ─── Camera panel ─── */
 const STATUS_LABELS: Record<FaceStatus, { text: string; color: string; dot: string }> = {
-  idle:            { text: 'Listo para iniciar',          color: 'text-gray-500',    dot: 'bg-gray-400'   },
-  loading_models:  { text: 'Cargando modelos IA...',      color: 'text-unerg-600',   dot: 'bg-unerg-500'  },
-  starting_camera: { text: 'Iniciando cámara...',         color: 'text-unerg-600',   dot: 'bg-unerg-500'  },
-  no_face:         { text: 'Coloca tu rostro en el marco',color: 'text-amber-600',   dot: 'bg-amber-400'  },
-  multiple:        { text: 'Solo un rostro por favor',    color: 'text-red-500',     dot: 'bg-red-400'    },
-  detected:        { text: 'Rostro detectado...',         color: 'text-unerg-600',   dot: 'bg-unerg-500'  },
-  verifying:       { text: 'Verificando biometría...',    color: 'text-unerg-700',   dot: 'bg-unerg-600'  },
-  verified:        { text: '✓ Identidad verificada',      color: 'text-emerald-600', dot: 'bg-emerald-400'},
-  error:           { text: 'Error de cámara',             color: 'text-red-500',     dot: 'bg-red-400'    },
+  idle:            { text: 'Listo para iniciar',          color: 'text-slate-400',   dot: 'bg-slate-500'  },
+  loading_models:  { text: 'Cargando modelos IA...',      color: 'text-blue-400',    dot: 'bg-blue-500'   },
+  starting_camera: { text: 'Iniciando cámara...',         color: 'text-blue-400',    dot: 'bg-blue-500'   },
+  no_face:         { text: 'Coloca tu rostro en el marco',color: 'text-amber-400',   dot: 'bg-amber-400'  },
+  multiple:        { text: 'Solo un rostro por favor',    color: 'text-red-400',     dot: 'bg-red-500'    },
+  detected:        { text: 'Rostro detectado...',         color: 'text-blue-300',    dot: 'bg-blue-400'   },
+  verifying:       { text: 'Verificando biometría...',    color: 'text-indigo-400',  dot: 'bg-indigo-500' },
+  verified:        { text: '✓ Identidad verificada',      color: 'text-emerald-400', dot: 'bg-emerald-500'},
+  error:           { text: 'Error de cámara',             color: 'text-red-400',     dot: 'bg-red-500'    },
 }
 
 function CameraPanel({ onVerified }: { onVerified: (descriptor: number[]) => void }) {
@@ -149,15 +149,10 @@ function CameraPanel({ onVerified }: { onVerified: (descriptor: number[]) => voi
   return (
     <div className="flex flex-col gap-3">
       {/* Viewport */}
-      <div className="camera-wrapper shadow-card"
+      <div className="camera-wrapper"
         style={{
-          border: verified
-            ? '2px solid #10b981'
-            : status === 'error'
-              ? '2px solid #fca5a5'
-              : '1.5px solid #e5e7eb',
-          boxShadow: verified ? '0 0 24px rgba(16,185,129,0.2)' : undefined,
-          transition: 'border-color 0.4s, box-shadow 0.4s',
+          boxShadow: verified ? 'inset 0 0 40px rgba(16,185,129,0.2), 0 0 24px rgba(16,185,129,0.3)' : undefined,
+          transition: 'all 0.4s',
         }}>
         <video ref={videoRef} className="camera-video" autoPlay playsInline muted />
         <canvas ref={canvasRef} className="camera-canvas" />
@@ -173,25 +168,6 @@ function CameraPanel({ onVerified }: { onVerified: (descriptor: number[]) => voi
           </>
         )}
 
-        {/* Idle */}
-        {!isRunning && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-900">
-            <div className="w-16 h-16 rounded-full bg-unerg-900/40 flex items-center justify-center">
-              <Camera size={32} className="text-unerg-300" strokeWidth={1.5} />
-            </div>
-            <p className="text-white/60 text-sm font-medium">Cámara desactivada</p>
-          </div>
-        )}
-
-        {/* Loading */}
-        <AnimatePresence>
-          {(status === 'loading_models' || status === 'starting_camera') && (
-            <motion.div className="absolute inset-0 bg-slate-900/80 flex items-center justify-center"
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <Loader2 size={32} className="text-unerg-400 animate-spin" />
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* Verified overlay */}
         <AnimatePresence>
@@ -210,47 +186,77 @@ function CameraPanel({ onVerified }: { onVerified: (descriptor: number[]) => voi
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Camera Overlay when loading */}
+        <AnimatePresence>
+          {(!isRunning || status === 'starting_camera' || status === 'loading_models') && !verified && !error && (
+            <motion.div
+              className="absolute inset-0 bg-slate-900/90 backdrop-blur-sm z-20 flex flex-col items-center justify-center gap-6"
+              initial={{ opacity: 1 }} exit={{ opacity: 0 }}
+            >
+              <div className="relative w-24 h-24 flex items-center justify-center">
+                {/* Outer rotating dashed ring */}
+                <motion.div 
+                  className="absolute inset-0 border-2 border-dashed border-blue-500/30 rounded-full"
+                  animate={{ rotate: 360 }}
+                  transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
+                />
+                
+                {/* Inner pulsing solid ring */}
+                <motion.div 
+                  className="absolute inset-2 border border-blue-400/50 rounded-full"
+                  animate={{ scale: [1, 1.05, 1], opacity: [0.5, 1, 0.5] }}
+                  transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                />
+
+                {/* Central Face icon */}
+                <Scan size={36} className="text-blue-400 opacity-80" strokeWidth={1.5} />
+                
+                {/* Horizontal scanning line */}
+                <motion.div 
+                  className="absolute left-4 right-4 h-[2px] bg-blue-400 shadow-[0_0_8px_#60a5fa]"
+                  animate={{ top: ['20%', '80%', '20%'] }}
+                  transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                />
+              </div>
+              <span className="text-blue-400 text-sm font-semibold tracking-widest uppercase animate-pulse">
+                Inicializando Sensor...
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      {/* Confidence bar (Rediseñado Premium) */}
+      {/* Confidence bar (Sci-Fi Premium) */}
       {isRunning && !verified && (
-        <div className="relative p-4 rounded-2xl bg-slate-50 border border-slate-100 shadow-sm overflow-hidden flex flex-col gap-2.5">
-          <div className="flex justify-between items-center relative z-10">
-            <div className="flex items-center gap-2">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-              </span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                Escaneo de Seguridad
-              </span>
-            </div>
-            <span className="text-blue-600 text-xs font-bold font-mono tracking-wider tabular-nums">
+        <div className="bg-slate-900/50 rounded-2xl p-5 border border-slate-700/50 backdrop-blur-md shadow-2xl relative overflow-hidden">
+          {/* Telemetry Background Detail */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
+          
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-blue-400 font-semibold text-xs tracking-widest uppercase flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+              Análisis Biométrico
+            </span>
+            <span className="text-blue-300 font-mono font-bold text-sm tracking-wider">
               {confidence}%
             </span>
           </div>
-
-          <div className="h-2.5 w-full bg-slate-200/50 rounded-full p-0.5 border border-slate-200/20 overflow-hidden relative z-10 shadow-inner">
-            <motion.div
-              className="h-full rounded-full bg-gradient-to-r from-blue-600 to-indigo-500 relative overflow-hidden shadow-[0_0_8px_rgba(37,99,235,0.3)]"
-              animate={{ width: `${confidence}%` }}
-              transition={{ duration: 0.15, ease: 'easeOut' }}
-            >
-              {/* Shimmer sweep effect */}
-              <motion.div
-                className="absolute inset-0 w-1/2 h-full bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.4),transparent)]"
-                animate={{ x: ['-100%', '200%'] }}
-                transition={{ repeat: Infinity, duration: 1.8, ease: 'linear' }}
-              />
-              {/* Glowing tip */}
-              <div className="absolute top-0 right-0 h-full w-1.5 bg-white rounded-full shadow-[0_0_6px_#fff]" />
-            </motion.div>
+          <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden relative shadow-inner">
+            <div
+              className="absolute top-0 left-0 h-full rounded-full transition-all duration-[400ms] ease-out"
+              style={{
+                width: `${Math.max(5, confidence)}%`,
+                background: 'linear-gradient(90deg, #3b82f6 0%, #60a5fa 50%, #00f2fe 100%)',
+                boxShadow: '0 0 10px rgba(96, 165, 250, 0.8), inset 0 0 4px rgba(255, 255, 255, 0.4)'
+              }}
+            />
           </div>
-
-          {/* Telemetry metadata */}
-          <div className="flex justify-between items-center text-[9px] font-mono text-slate-400 leading-none">
-            <span>SECURE_ENCLAVE: ON</span>
-            <span>LANDMARKS: OK</span>
+          <div className="flex justify-between mt-3 text-[9px] text-slate-500 font-mono uppercase tracking-widest">
+            <span>Secure_Enclave: ON</span>
+            <span className={confidence > 50 ? 'text-emerald-400' : 'text-slate-500'}>
+              Landmarks: {confidence > 50 ? 'LOCKED' : 'SCAN'}
+            </span>
           </div>
         </div>
       )}
@@ -263,7 +269,7 @@ function CameraPanel({ onVerified }: { onVerified: (descriptor: number[]) => voi
         </div>
         {isRunning && !verified && (
           <button onClick={stopCamera}
-            className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 transition-colors">
+            className="flex items-center gap-1 text-xs text-slate-500 hover:text-red-400 transition-colors">
             <X size={12} /> Detener
           </button>
         )}
@@ -277,9 +283,8 @@ function CameraPanel({ onVerified }: { onVerified: (descriptor: number[]) => voi
         </div>
       )}
 
-      {/* Start */}
       {!isRunning && !verified && (
-        <motion.button className="btn-blue" onClick={startCamera} whileTap={{ scale: 0.97 }}>
+        <motion.button className="btn-blue mt-2" onClick={startCamera} whileTap={{ scale: 0.97 }}>
           <Scan size={18} /> Iniciar Verificación Facial
         </motion.button>
       )}
@@ -297,31 +302,31 @@ function SuccessCard({ name, onReset }: { name: string; onReset: () => void }) {
       transition={{ type: 'spring', stiffness: 260, damping: 22 }}
     >
       {/* Check */}
-      <motion.div className="w-20 h-20 rounded-full bg-unerg-600 flex items-center justify-center shadow-blue-lg"
+      <motion.div className="w-20 h-20 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/30 shadow-[0_0_40px_rgba(16,185,129,0.2)]"
         initial={{ scale: 0 }} animate={{ scale: 1 }}
         transition={{ type: 'spring', stiffness: 280, damping: 18, delay: 0.1 }}>
-        <CheckCircle size={40} className="text-white" strokeWidth={1.8} />
+        <CheckCircle size={40} className="text-emerald-400" strokeWidth={1.8} />
       </motion.div>
 
       <div>
-        <h3 className="font-display font-bold text-2xl text-gray-900">¡Registro Exitoso!</h3>
-        <p className="text-gray-400 text-sm mt-1">
-          Bienvenido, <span className="text-gray-700 font-medium">{name}</span>
+        <h3 className="font-display font-bold text-2xl text-white">¡Registro Exitoso!</h3>
+        <p className="text-slate-400 text-sm mt-1">
+          Bienvenido, <span className="text-slate-200 font-medium">{name}</span>
         </p>
       </div>
 
 
       {/* Privacy */}
-      <div className="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-xl p-3 w-full text-left">
-        <Shield size={14} className="text-unerg-500 mt-0.5 flex-shrink-0" />
-        <p className="text-unerg-700 text-xs leading-relaxed">
-          Tus datos biométricos están cifrados con AES-256 y almacenados conforme a la normativa UNERG.
+      <div className="flex items-start gap-2 bg-slate-800/50 border border-slate-700/50 rounded-xl p-3 w-full text-left">
+        <Shield size={14} className="text-blue-400 mt-0.5 flex-shrink-0" />
+        <p className="text-slate-300 text-xs leading-relaxed">
+          Tus datos biométricos están cifrados con AES-256 y almacenados de forma segura.
         </p>
       </div>
 
       <button
         onClick={onReset}
-        className="mt-2 w-full py-3 rounded-xl border-2 border-gray-100 text-gray-500 text-sm font-semibold hover:border-unerg-200 hover:text-unerg-600 hover:bg-unerg-50 transition-all"
+        className="mt-2 w-full py-3 rounded-xl border border-slate-700 text-slate-400 text-sm font-semibold hover:border-blue-500/50 hover:text-blue-400 hover:bg-blue-500/10 transition-all"
       >
         + Registrar nueva persona
       </button>
@@ -333,10 +338,10 @@ function SuccessCard({ name, onReset }: { name: string; onReset: () => void }) {
 function ProgressBar({ step }: { step: number }) {
   const pct = ((step - 1) / 2) * 100
   return (
-    <div className="h-1 rounded-full bg-gray-100 overflow-hidden mb-1">
+    <div className="h-1 rounded-full bg-slate-800 overflow-hidden mb-1">
       <motion.div
         className="h-full rounded-full"
-        style={{ background: 'linear-gradient(90deg,#2563eb,#60a5fa)' }}
+        style={{ background: 'linear-gradient(90deg,#3b82f6,#8b5cf6)' }}
         animate={{ width: `${pct}%` }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       />
@@ -419,21 +424,21 @@ export default function App() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 flex items-center justify-center p-4">
-      {/* Blobs */}
-      <div className="fixed top-0 right-0 w-96 h-96 rounded-full opacity-[0.04] blur-3xl bg-blue-500 pointer-events-none" />
-      <div className="fixed bottom-0 left-0 w-80 h-80 rounded-full opacity-[0.04] blur-3xl bg-blue-600 pointer-events-none" />
+    <div className="min-h-screen bg-[#0B1121] flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Deep Space Background Blobs */}
+      <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] rounded-full opacity-20 blur-[120px] bg-blue-600 pointer-events-none" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full opacity-10 blur-[150px] bg-indigo-600 pointer-events-none" />
 
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md relative z-10">
         {/* Header */}
         <div className="text-center mb-8 animate-page">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-unerg-600 shadow-blue-md mb-4">
-            <Shield size={26} className="text-white" strokeWidth={1.8} />
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-slate-800/50 border border-slate-700/50 shadow-[0_0_30px_rgba(59,130,246,0.15)] mb-4">
+            <Shield size={26} className="text-blue-400" strokeWidth={1.8} />
           </div>
-          <h1 className="font-display font-bold text-2xl text-gray-900">
-            Bank <span className="text-unerg-600">UNERG</span>
+          <h1 className="font-display font-bold text-2xl text-white tracking-wide">
+            Bank<span className="text-blue-500">UNERG</span>
           </h1>
-          <p className="text-gray-400 text-sm mt-1">Sistema de Registro KYC Biométrico</p>
+          <p className="text-slate-400 text-sm mt-1 uppercase tracking-widest text-[10px]">KYC Biométrico</p>
         </div>
 
         {/* Steps + progress */}
@@ -441,10 +446,10 @@ export default function App() {
           <ProgressBar step={step} />
           <div className="flex items-center justify-center gap-0 mt-3">
             <StepBadge n={1} label="Datos"       state={step > 1 ? 'done' : step === 1 ? 'active' : 'idle'} />
-            <div className="w-12 h-px bg-gray-200 mx-1 mb-5" />
+            <div className="w-12 h-px bg-slate-700/50 mx-1 mb-5" />
             <StepBadge n={2} label="Biometría"   state={step > 2 ? 'done' : step === 2 ? 'active' : 'idle'} />
-            <div className="w-12 h-px bg-gray-200 mx-1 mb-5" />
-            <StepBadge n={3} label="Confirmación" state={step === 3 ? (submitted ? 'done' : 'active') : 'idle'} />
+            <div className="w-12 h-px bg-slate-700/50 mx-1 mb-5" />
+            <StepBadge n={3} label="Check" state={step === 3 ? (submitted ? 'done' : 'active') : 'idle'} />
           </div>
         </div>
 
@@ -454,8 +459,8 @@ export default function App() {
             <motion.div key="step1" className="card p-6 animate-page delay-2"
               initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}>
-              <h2 className="font-display font-semibold text-gray-900 text-lg mb-1">Datos Personales</h2>
-              <p className="text-gray-400 text-sm mb-5">Ingresa tu información tal como aparece en tu cédula.</p>
+              <h2 className="font-display font-semibold text-white text-lg mb-1">Datos Personales</h2>
+              <p className="text-slate-400 text-sm mb-5">Ingresa tu información tal como aparece en tu cédula.</p>
 
               <div className="flex flex-col gap-4">
                 {fields.map(f => (
@@ -486,8 +491,8 @@ export default function App() {
             <motion.div key="step2" className="card p-6"
               initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}>
-              <h2 className="font-display font-semibold text-gray-900 text-lg mb-1">Verificación Facial</h2>
-              <p className="text-gray-400 text-sm mb-4">
+              <h2 className="font-display font-semibold text-white text-lg mb-1">Verificación Facial</h2>
+              <p className="text-slate-400 text-sm mb-4">
                 Inicia la cámara y coloca tu rostro dentro del marco. La detección es automática.
               </p>
 
@@ -503,7 +508,7 @@ export default function App() {
               />
 
               <div className="mt-5 flex gap-3">
-                <button className="flex-1 py-3 rounded-xl border-2 border-gray-100 text-gray-500 text-sm font-semibold hover:border-gray-200 hover:text-gray-700 transition-all"
+                <button className="flex-1 py-3 rounded-xl border border-slate-700 text-slate-400 text-sm font-semibold hover:border-slate-500 hover:text-slate-200 transition-all"
                   onClick={() => setStep(1)}>
                   ← Volver
                 </button>
@@ -523,10 +528,10 @@ export default function App() {
               exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}>
               {!submitted ? (
                 <>
-                  <h2 className="font-display font-semibold text-gray-900 text-lg mb-1">Confirmar Registro</h2>
-                  <p className="text-gray-400 text-sm mb-5">Revisa tus datos antes de enviar.</p>
+                  <h2 className="font-display font-semibold text-white text-lg mb-1">Confirmar Registro</h2>
+                  <p className="text-slate-400 text-sm mb-5">Revisa tus datos antes de enviar.</p>
 
-                  <div className="bg-slate-50 rounded-2xl p-4 flex flex-col gap-3 mb-5 border border-slate-100">
+                  <div className="bg-slate-800/50 rounded-2xl p-4 flex flex-col gap-3 mb-5 border border-slate-700/50">
                     {[
                       { label: 'Nombres',   value: form.nombres   },
                       { label: 'Apellidos', value: form.apellidos },
@@ -534,30 +539,30 @@ export default function App() {
                       { label: 'Biometría', value: '✓ Verificada', highlight: true },
                     ].map(({ label, value, highlight }) => (
                       <div key={label} className="flex justify-between items-center">
-                        <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">{label}</span>
-                        <span className={`text-sm font-semibold ${highlight ? 'text-emerald-600' : 'text-gray-800'}`}>
+                        <span className="text-xs text-slate-500 font-medium uppercase tracking-wide">{label}</span>
+                        <span className={`text-sm font-semibold ${highlight ? 'text-emerald-400' : 'text-slate-200'}`}>
                           {value}
                         </span>
                       </div>
                     ))}
                   </div>
 
-                  <div className="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-xl p-3 mb-5">
-                    <Shield size={15} className="text-unerg-500 mt-0.5 flex-shrink-0" />
-                    <p className="text-unerg-700 text-xs leading-relaxed">
-                      Tus datos biométricos son cifrados con AES-256 y almacenados conforme a la normativa UNERG.
+                  <div className="flex items-start gap-2 bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 mb-5">
+                    <Shield size={15} className="text-blue-400 mt-0.5 flex-shrink-0" />
+                    <p className="text-blue-200/70 text-xs leading-relaxed">
+                      Tus datos biométricos son cifrados con AES-256 y almacenados conforme a la normativa de seguridad.
                     </p>
                   </div>
 
                   {registerError && (
-                    <div className="flex items-start gap-2 bg-red-50 border border-red-100 rounded-xl p-3 mb-5">
+                    <div className="flex items-start gap-2 bg-red-500/10 border border-red-500/20 rounded-xl p-3 mb-5">
                       <AlertCircle size={16} className="text-red-400 mt-0.5 flex-shrink-0" />
-                      <p className="text-red-600 text-sm">{registerError}</p>
+                      <p className="text-red-400 text-sm">{registerError}</p>
                     </div>
                   )}
 
                   <div className="flex gap-3">
-                    <button className="flex-1 py-3 rounded-xl border-2 border-gray-100 text-gray-500 text-sm font-semibold hover:border-gray-200 transition-all"
+                    <button className="flex-1 py-3 rounded-xl border border-slate-700 text-slate-400 text-sm font-semibold hover:border-slate-500 transition-all"
                       disabled={isRegistering}
                       onClick={() => setStep(2)}>
                       ← Volver
@@ -596,11 +601,11 @@ export default function App() {
         </AnimatePresence>
 
         <div className="text-center mt-8 pb-4">
-          <p className="text-gray-300 text-xs font-semibold uppercase tracking-wider mb-1">
+          <p className="text-slate-500 text-[10px] font-semibold uppercase tracking-widest mb-1">
             Diseñado y desarrollado por PRAGMA STUDIO
           </p>
-          <p className="text-gray-400 text-[10px]">
-            &copy; {new Date().getFullYear()} PRAGMA STUDIO. Se reserva el derecho de autor. Todos los derechos reservados.
+          <p className="text-slate-600 text-[9px] uppercase tracking-wide">
+            &copy; {new Date().getFullYear()} PRAGMA STUDIO. Reservados los derechos de autor.
           </p>
         </div>
       </div>

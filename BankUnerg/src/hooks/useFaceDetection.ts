@@ -76,6 +76,7 @@ export function useFaceDetection(): UseFaceDetectionReturn {
     ;(async () => {
       try {
         // Optimize TF.js environment to prevent memory leaks and WebGL crashes on Apple devices
+        // Optimize TF.js environment to prevent memory leaks and WebGL crashes
         if (faceapi.tf) {
           const env = typeof faceapi.tf.env === 'function' ? faceapi.tf.env() : (faceapi.tf as any).ENV;
           if (env) {
@@ -90,13 +91,12 @@ export function useFaceDetection(): UseFaceDetectionReturn {
                 console.warn(`[BioFacial] No se pudo configurar la flag ${flag}:`, e);
               }
             };
-            // Aplicar optimizaciones WebGL para TODOS los dispositivos (especialmente Windows tras suspender)
+            // Aplicar optimizaciones WebGL para TODOS los dispositivos
             setSafe('WEBGL_DELETE_TEXTURE_THRESHOLD', 0);
             setSafe('WEBGL_FORCE_F16_TEXTURES', true);
-            setSafe('WEBGL_PACK', false); // <- PREVIENE EL CONGELAMIENTO EN WINDOWS AL VOLVER DE SUSPENSIÓN
-            console.log('[BioFacial] Optimizaciones extremas de WebGL aplicadas para prevenir congelamiento.');
+            setSafe('WEBGL_PACK', false); // Previene congelamiento en Windows
+            console.log('[BioFacial] Optimizaciones extremas de WebGL aplicadas.');
           }
-          console.log('[BioFacial] Entorno de TensorFlow.js verificado (BankUnerg).')
         }
 
         // ── PHASE 1: Load tiny detector only (193 KB) ──
@@ -251,35 +251,18 @@ export function useFaceDetection(): UseFaceDetectionReturn {
 
             const box = d.detection.box
 
-            // Bounding box drawing
-            ctx.strokeStyle = pct >= 100 ? '#10b981' : '#3b82f6'
-            ctx.lineWidth   = 2
-            ctx.shadowColor = pct >= 100 ? 'rgba(16,185,129,0.6)' : 'rgba(59,130,246,0.6)'
-            ctx.shadowBlur  = 10
-            ctx.strokeRect(box.x, box.y, box.width, box.height)
-            ctx.shadowBlur  = 0
-
-            // Landmark dots
-            d.landmarks.positions.forEach((p) => {
-              ctx.beginPath()
-              ctx.arc(p.x, p.y, 2, 0, Math.PI * 2)
-              ctx.fillStyle = pct >= 100 ? 'rgba(16,185,129,0.8)' : '#3b82f6'
-              ctx.fill()
-            })
-
-            // Confidence progress text inside viewport
-            if (pct < 100) {
-              ctx.font = '10px monospace'
-              ctx.fillStyle = '#3b82f6'
-              ctx.fillText(`ANALYZE: ${pct}%`, box.x, box.y - 8)
-            }
-
-            // Corner brackets
-            const bLen = 15
-            ctx.strokeStyle = pct >= 100 ? '#10b981' : '#3b82f6'
-            ctx.lineWidth   = 2.5
-            ctx.shadowColor = pct >= 100 ? 'rgba(16,185,129,0.4)' : 'rgba(59,130,246,0.4)'
-            ctx.shadowBlur  = 6
+            // Premium Face ID Bounding Box
+            const boxColor = pct >= 100 ? '#00ffcc' : '#3b82f6'
+            
+            // Corner brackets (Sleek)
+            const bLen = 24
+            ctx.strokeStyle = boxColor
+            ctx.lineWidth   = 3
+            ctx.lineCap = 'round'
+            ctx.lineJoin = 'round'
+            ctx.shadowColor = boxColor
+            ctx.shadowBlur  = pct >= 100 ? 15 : 8
+            
             const corner = (x: number, y: number, dx: number, dy: number) => {
               ctx.beginPath()
               ctx.moveTo(x + dx * bLen, y); ctx.lineTo(x, y); ctx.lineTo(x, y + dy * bLen)
@@ -290,6 +273,32 @@ export function useFaceDetection(): UseFaceDetectionReturn {
             corner(box.x,             box.y + box.height, 1, -1)
             corner(box.x + box.width, box.y + box.height,-1, -1)
             ctx.shadowBlur = 0
+
+            // Animated Scanner Line
+            if (pct < 100) {
+              const time = performance.now() / 1000
+              // Oscillates between 0 and 1
+              const sweepY = (Math.sin(time * 3) + 1) / 2
+              const lineY = box.y + (box.height * sweepY)
+              
+              ctx.beginPath()
+              ctx.moveTo(box.x, lineY)
+              ctx.lineTo(box.x + box.width, lineY)
+              ctx.strokeStyle = 'rgba(59, 130, 246, 0.8)'
+              ctx.lineWidth = 2
+              ctx.shadowColor = '#3b82f6'
+              ctx.shadowBlur = 10
+              ctx.stroke()
+              ctx.shadowBlur = 0
+            }
+
+            // Optional: Draw a subtle glow around the face center instead of dots
+            ctx.beginPath()
+            ctx.arc(box.x + box.width / 2, box.y + box.height / 2, box.width * 0.35, 0, Math.PI * 2)
+            ctx.fillStyle = pct >= 100 ? 'rgba(0, 255, 204, 0.1)' : 'rgba(59, 130, 246, 0.05)'
+            ctx.fill()
+
+
           }
         }
       } catch (err) {

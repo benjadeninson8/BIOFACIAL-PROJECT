@@ -169,16 +169,36 @@ export default function FacialCamera({ onVerified, onCancel, lightTheme = false 
           }}
         />
 
-        {/* Idle / loading */}
-        {!isRunning && status !== 'error' && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-            {status === 'loading_models' || status === 'starting_camera'
-              ? <Loader2 size={36} className="text-blue-400 animate-spin" />
-              : <Scan size={36} className="text-white/30" strokeWidth={1.5} />
-            }
-            <p className="text-white/40 text-sm">{info.text}</p>
-          </div>
-        )}
+        {/* Camera Overlay when loading */}
+        <AnimatePresence>
+          {!isRunning && status !== 'error' && (
+            <motion.div
+              className="absolute inset-0 bg-slate-900/90 backdrop-blur-sm z-20 flex flex-col items-center justify-center gap-6"
+              initial={{ opacity: 1 }} exit={{ opacity: 0 }}
+            >
+              <div className="relative w-24 h-24 flex items-center justify-center">
+                <motion.div 
+                  className="absolute inset-0 border-2 border-dashed border-blue-500/30 rounded-full"
+                  animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 8, ease: "linear" }}
+                />
+                <motion.div 
+                  className="absolute inset-2 border border-blue-400/50 rounded-full"
+                  animate={{ scale: [1, 1.05, 1], opacity: [0.5, 1, 0.5] }}
+                  transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                />
+                <Scan size={36} className="text-blue-400 opacity-80" strokeWidth={1.5} />
+                <motion.div 
+                  className="absolute left-4 right-4 h-[2px] bg-blue-400 shadow-[0_0_8px_#60a5fa]"
+                  animate={{ top: ['20%', '80%', '20%'] }}
+                  transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                />
+              </div>
+              <span className="text-blue-400 text-sm font-semibold tracking-widest uppercase animate-pulse">
+                Inicializando Sensor...
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Error */}
         {status === 'error' && (
