@@ -175,8 +175,8 @@ export default function App() {
             </div>
             <div>
               <p className="text-gray-400 text-[9px] tracking-widest uppercase font-medium leading-none">Sistema de Autopago</p>
-              <h1 className="font-display font-bold text-lg leading-tight text-gray-900">
-                BODE<span className="text-gradient-blue">UNERG</span>
+              <h1 className="font-display font-bold text-lg leading-tight text-slate-900">
+                BODE<span className="text-blue-600">UNERG</span>
               </h1>
             </div>
           </div>
@@ -204,7 +204,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="font-display font-bold text-2xl tracking-tight text-slate-900">
-                Bode<span className="text-blue-600">UNERG</span>
+                BODE<span className="text-blue-600">UNERG</span>
               </h1>
               <p className="text-slate-500 text-xs font-medium uppercase tracking-widest mt-0.5">
                 Punto de Venta Biométrico
