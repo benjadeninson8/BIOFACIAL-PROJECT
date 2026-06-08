@@ -90,15 +90,11 @@ export function useFaceDetection(): UseFaceDetectionReturn {
                 console.warn(`[BioFacial] No se pudo configurar la flag ${flag}:`, e);
               }
             };
-            const isApple = /Mac|iPhone|iPad|iPod/i.test(navigator.userAgent) || 
-                            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-            if (isApple) {
-              setSafe('WEBGL_DELETE_TEXTURE_THRESHOLD', 0);
-              setSafe('WEBGL_FORCE_F16_TEXTURES', true);
-              console.log('[BioFacial] Dispositivo Apple detectado. Optimizaciones de memoria WebGL aplicadas.');
-            } else {
-              console.log('[BioFacial] Dispositivo no Apple. Utilizando configuración WebGL predeterminada.');
-            }
+            // Aplicar optimizaciones WebGL para TODOS los dispositivos (especialmente Windows tras suspender)
+            setSafe('WEBGL_DELETE_TEXTURE_THRESHOLD', 0);
+            setSafe('WEBGL_FORCE_F16_TEXTURES', true);
+            setSafe('WEBGL_PACK', false); // <- PREVIENE EL CONGELAMIENTO EN WINDOWS AL VOLVER DE SUSPENSIÓN
+            console.log('[BioFacial] Optimizaciones extremas de WebGL aplicadas para prevenir congelamiento.');
           }
           console.log('[BioFacial] Entorno de TensorFlow.js verificado (BankUnerg).')
         }
@@ -182,7 +178,6 @@ export function useFaceDetection(): UseFaceDetectionReturn {
 
     if (canvas) {
       isDetectingRef.current = true
-      if (faceapi.tf) faceapi.tf.engine().startScope()
       try {
         const displaySize = { width: video.videoWidth, height: video.videoHeight }
         if (canvas.width !== displaySize.width || canvas.height !== displaySize.height) {
@@ -300,7 +295,6 @@ export function useFaceDetection(): UseFaceDetectionReturn {
       } catch (err) {
         console.error('[BioFacial] Error en frame de detección:', err)
       } finally {
-        if (faceapi.tf) faceapi.tf.engine().endScope()
         isDetectingRef.current = false
       }
     }

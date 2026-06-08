@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guion para el Video Demostrativo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background-color: #f8fafc;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 3rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border-top: 4px solid #8b5cf6;
+        }
+        h1 { color: #111827; border-bottom: 2px solid #8b5cf6; padding-bottom: 0.5rem; }
+        h2 { color: #6d28d9; margin-top: 2rem; border-left: 4px solid #8b5cf6; padding-left: 0.75rem; }
+        .instructions {
+            background-color: #fffbeb;
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 4px solid #fbbf24;
+            margin-bottom: 2rem;
+            color: #92400e;
+        }
+        .action {
+            background-color: #f3f4f6;
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-style: italic;
+            color: #4b5563;
+            margin: 1rem 0;
+            border: 1px dashed #d1d5db;
+        }
+        .dialogue {
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            color: #1f2937;
+        }
+        .speaker {
+            font-weight: bold;
+            color: #4c1d95;
+            margin-right: 0.5rem;
+        }
+        .footer {
+            margin-top: 3rem;
+            text-align: center;
+            font-size: 0.875rem;
+            color: #6b7280;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Guion para tu Video Demostrativo</h1>
+        
+        <div class="instructions">
+            <strong>Instrucciones para ti:</strong> Sigue este guion mientras grabas tu pantalla (puedes usar OBS, Loom o Zoom). Las acciones que debes hacer en pantalla están en los recuadros grises. La idea es que te veas seguro, profesional y como el experto que blindó el proyecto.
+        </div>
+
+        <h2>1. Introducción y Saludo</h2>
+        <p class="dialogue"><span class="speaker">Tú (Hablando):</span> "Hola Carpio y equipo. Por acá [Tu Nombre] de <strong>PRAGMA STUDIO</strong>. Les grabo este video para entregarles formalmente el proyecto BioFacial, ya finalizado y completamente blindado en todas sus capas, tal como acordamos para su presentación."</p>
+        <p class="dialogue"><span class="speaker">Tú:</span> "Mi objetivo hoy es mostrarles cómo quedó la seguridad del sistema, cómo funciona la biometría por debajo y cómo deben manejar ustedes la base de datos el día de su exposición para impresionar a su jurado."</p>
+
+        <h2>2. Mostrando el Blindaje del Frontend</h2>
+        <div class="action">[Abre tu navegador y muestra la pantalla principal de BankUnerg]</div>
+        <p class="dialogue"><span class="speaker">Tú:</span> "Primero, hablemos del Frontend. Para proteger la idea y el código del proyecto, implementé un blindaje anti-inspección."</p>
+        <div class="action">[Haz clic derecho varias veces en la pantalla, intentando abrir el menú contextual]</div>
+        <p class="dialogue"><span class="speaker">Tú:</span> "Como pueden ver, el menú de clic derecho está totalmente bloqueado. Además, si intento presionar las teclas de desarrollador, como F12 o Control+Shift+I <em>[Haz el gesto de teclear o menciónalo]</em>, el sistema intercepta las teclas y bloquea el acceso. El código fuente está sellado."</p>
+        <div class="action">[Haz scroll hacia el fondo de la página para mostrar el footer]</div>
+        <p class="dialogue"><span class="speaker">Tú:</span> "Adicionalmente, en la parte inferior de todas las pantallas de BankUnerg y BodeUnerg hemos fijado el footer de autoría intelectual: <strong>'Diseñado y desarrollado por PRAGMA STUDIO, se reserva el derecho de autor'</strong>."</p>
+
+        <h2>3. Explicando la Seguridad del Backend (Railway)</h2>
+        <div class="action">[Puedes abrir una pestaña mostrando Railway de fondo, o simplemente dejar la pantalla de BankUnerg]</div>
+        <p class="dialogue"><span class="speaker">Tú:</span> "En cuanto a nuestro servidor en la nube de Railway, no lo dejamos expuesto. Le inyecté librerías de grado bancario:<br>
+        1. <strong>Helmet:</strong> Encripta las cabeceras HTTP para bloquear inyecciones de código.<br>
+        2. <strong>Rate-Limiter (Antifraude):</strong> Si un atacante intenta tumbarles el servidor haciendo muchos pagos falsos de golpe, el servidor detecta el tráfico inusual y bloquea la IP automáticamente. El backend es prácticamente invulnerable."</p>
+
+        <h2>4. La Base de Datos (Explicación del Hash y Modo Lectura)</h2>
+        <div class="action">[Abre MongoDB Atlas o Compass en la tabla 'users']</div>
+        <p class="dialogue"><span class="speaker">Tú:</span> "Ahora, lo más importante: La Base de Datos. Como saben, por privacidad el sistema no guarda fotos, sino este arreglo matemático."</p>
+        <div class="action">[Señala con el mouse el campo 'descriptor' de algún usuario, mostrando los 128 números]</div>
+        <p class="dialogue"><span class="speaker">Tú:</span> "A esto se le llama <strong>Descriptor Facial de 128 dimensiones</strong>. Es como un hash de contraseña, pero biométrico. Se valida matemáticamente usando Distancia Euclidiana."</p>
+        <p class="dialogue"><span class="speaker">Tú:</span> "<strong>Atención aquí:</strong> Yo les he creado a ustedes un usuario especial de <strong>'Solo Lectura'</strong>. Les pasaré las credenciales de este usuario junto con el Manual Técnico. El día de su defensa, abran MongoDB con esas credenciales. Así podrán mostrarle al jurado en tiempo real cómo se llenan los datos de las personas, pero ni ustedes ni el jurado podrán borrar o dañar la base de datos por accidente. Es la forma más profesional de hacer una demostración."</p>
+
+        <h2>5. Demostración Rápida del Flujo</h2>
+        <div class="action">[Ve a BankUnerg y registra un usuario falso rápidamente usando tu rostro]</div>
+        <p class="dialogue"><span class="speaker">Tú:</span> "Para cerrar, hagamos una prueba. Me registro en BankUnerg, el sistema extrae mis puntos faciales en el navegador (no en la nube, lo que ahorra costos) y me genera un código de éxito."</p>
+        <div class="action">[Pásate a la pestaña de BodeUnerg, agrega algo al carrito y paga con Reconocimiento Facial]</div>
+        <p class="dialogue"><span class="speaker">Tú:</span> "Luego, en el kiosco BodeUnerg, el usuario va a pagar. Escoge biometría, el sistema lee mi rostro, calcula la distancia euclidiana matemática contra la base de datos en milisegundos, aprueba el pago porque la similitud es exacta, y listo. Sin tarjetas, sin efectivo."</p>
+
+        <h2>6. Despedida</h2>
+        <p class="dialogue"><span class="speaker">Tú:</span> "Con esto cerramos. El proyecto está 100% operativo y en producción. Lean el <strong>Manual Técnico de Cliente</strong> que les envié, ahí está toda esta teoría explicada para que sepan defenderse ante cualquier pregunta. Un abrazo y mucho éxito en la defensa."</p>
+
+        <div class="footer">
+            PRAGMA STUDIO - Guion de Entrega
+        </div>
+    </div>
+</body>
+</html>

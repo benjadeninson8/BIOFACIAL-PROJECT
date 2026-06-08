@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { QRCodeSVG } from 'qrcode.react'
 import {
   User, FileText, Camera, CheckCircle, AlertCircle,
-  ChevronRight, Loader2, X, Shield, Scan, Copy, Check,
+  ChevronRight, Loader2, X, Shield, Scan,
 } from 'lucide-react'
 import { useFaceDetection, type FaceStatus } from './hooks/useFaceDetection'
 
@@ -288,16 +287,8 @@ function CameraPanel({ onVerified }: { onVerified: (descriptor: number[]) => voi
   )
 }
 
-/* ─── QR Success card ─── */
-function SuccessCard({ userId, name }: { userId: string; name: string }) {
-  const [copied, setCopied] = useState(false)
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(userId).catch(() => {})
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
+/* ─── Success card ─── */
+function SuccessCard({ name, onReset }: { name: string; onReset: () => void }) {
   return (
     <motion.div
       className="flex flex-col items-center text-center py-6 gap-5"
@@ -319,39 +310,6 @@ function SuccessCard({ userId, name }: { userId: string; name: string }) {
         </p>
       </div>
 
-      {/* QR card */}
-      <motion.div
-        className="w-full bg-gradient-to-br from-unerg-900 to-unerg-950 rounded-2xl p-5 flex items-center gap-5"
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        {/* QR code */}
-        <div className="bg-white rounded-xl p-2 flex-shrink-0">
-          <QRCodeSVG
-            value={`bank-unerg://user/${userId}`}
-            size={80}
-            bgColor="#ffffff"
-            fgColor="#1e3a8a"
-            level="M"
-          />
-        </div>
-
-        {/* Info */}
-        <div className="flex-1 text-left">
-          <p className="text-white/40 text-[10px] uppercase tracking-widest font-medium mb-1">ID de Usuario</p>
-          <p className="font-mono text-white font-semibold text-sm tracking-wide">{userId}</p>
-          <button
-            onClick={handleCopy}
-            className="mt-2 flex items-center gap-1.5 text-xs font-medium transition-colors"
-            style={{ color: copied ? '#10b981' : 'rgba(147,197,253,0.8)' }}
-          >
-            {copied ? <Check size={12} /> : <Copy size={12} />}
-            {copied ? 'Copiado' : 'Copiar ID'}
-          </button>
-          <p className="text-white/30 text-[10px] mt-2">Presenta este QR en cualquier punto UNERG</p>
-        </div>
-      </motion.div>
 
       {/* Privacy */}
       <div className="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-xl p-3 w-full text-left">
@@ -360,6 +318,13 @@ function SuccessCard({ userId, name }: { userId: string; name: string }) {
           Tus datos biométricos están cifrados con AES-256 y almacenados conforme a la normativa UNERG.
         </p>
       </div>
+
+      <button
+        onClick={onReset}
+        className="mt-2 w-full py-3 rounded-xl border-2 border-gray-100 text-gray-500 text-sm font-semibold hover:border-unerg-200 hover:text-unerg-600 hover:bg-unerg-50 transition-all"
+      >
+        + Registrar nueva persona
+      </button>
     </motion.div>
   )
 }
@@ -613,7 +578,18 @@ export default function App() {
                   </div>
                 </>
               ) : (
-                <SuccessCard userId={userId} name={form.nombres} />
+                <SuccessCard
+                  name={form.nombres}
+                  onReset={() => {
+                    setStep(1)
+                    setFaceVerified(false)
+                    setSubmitted(false)
+                    setForm({ nombres: '', apellidos: '', cedula: '' })
+                    setFaceDescriptor(null)
+                    setIsRegistering(false)
+                    setRegisterError(null)
+                  }}
+                />
               )}
             </motion.div>
           )}

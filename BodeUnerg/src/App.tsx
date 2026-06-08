@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { QRCodeSVG } from 'qrcode.react'
 import {
   ShoppingCart, X, CheckCircle, Scan, CreditCard,
-  Smartphone, ChevronRight, Wifi, Shield, ArrowLeft, Banknote, Package, QrCode
+  ChevronRight, Wifi, Shield, ArrowLeft, Banknote, Package, QrCode,
+  Smartphone
 } from 'lucide-react'
 import FacialCamera, { type BiometricUser } from './components/FacialCamera'
 import ConfettiBlast from './components/ConfettiBlast'
@@ -14,26 +14,26 @@ import CatalogQR from './components/CatalogQR'
 
 /* ─── Data ─── */
 const INITIAL: Product[] = [
-  { id: 2, name: 'Whiskey Reserva', price: 45.00, qty: 1, emoji: '🥃', category: 'Licorería',    accent: '#f59e0b' },
-  { id: 4, name: 'Maní Tostado',    price: 2.50,  qty: 2, emoji: '🥜', category: 'Snacks',       accent: '#10b981' },
+  { id: 2, name: 'Whiskey Reserva', price: 45.00, qty: 1, emoji: '🥃', category: 'Licorería', accent: '#f59e0b' },
+  { id: 4, name: 'Maní Tostado', price: 2.50, qty: 2, emoji: '🥜', category: 'Snacks', accent: '#10b981' },
 ]
 
 const CATALOG_ITEMS: Omit<Product, 'qty'>[] = [
-  { id: 1, name: 'Tabaco Premium',  price: 12.50, emoji: '🚬', category: 'Tabaquería',   accent: '#6366f1' },
-  { id: 2, name: 'Whiskey Reserva', price: 45.00, emoji: '🥃', category: 'Licorería',    accent: '#f59e0b' },
-  { id: 3, name: 'Hielo Artesanal', price: 3.75,  emoji: '🧊', category: 'Refrigerados', accent: '#0ea5e9' },
-  { id: 4, name: 'Maní Tostado',    price: 2.50,  emoji: '🥜', category: 'Snacks',       accent: '#10b981' },
-  { id: 5, name: 'Refresco Cola',   price: 1.80,  emoji: '🥤', category: 'Bebidas',      accent: '#ef4444' },
-  { id: 6, name: 'Chocolate Barra', price: 2.00,  emoji: '🍫', category: 'Dulces',       accent: '#8b5cf6' },
-  { id: 7, name: 'Cerveza Fría',    price: 3.50,  emoji: '🍺', category: 'Licorería',    accent: '#eab308' },
-  { id: 8, name: 'Papas Fritas',    price: 3.20,  emoji: '🍟', category: 'Snacks',       accent: '#ec4899' },
+  { id: 1, name: 'Tabaco Premium', price: 12.50, emoji: '🚬', category: 'Tabaquería', accent: '#6366f1' },
+  { id: 2, name: 'Whiskey Reserva', price: 45.00, emoji: '🥃', category: 'Licorería', accent: '#f59e0b' },
+  { id: 3, name: 'Hielo Artesanal', price: 3.75, emoji: '🧊', category: 'Refrigerados', accent: '#0ea5e9' },
+  { id: 4, name: 'Maní Tostado', price: 2.50, emoji: '🥜', category: 'Snacks', accent: '#10b981' },
+  { id: 5, name: 'Refresco Cola', price: 1.80, emoji: '🥤', category: 'Bebidas', accent: '#ef4444' },
+  { id: 6, name: 'Chocolate Barra', price: 2.00, emoji: '🍫', category: 'Dulces', accent: '#8b5cf6' },
+  { id: 7, name: 'Cerveza Fría', price: 3.50, emoji: '🍺', category: 'Licorería', accent: '#eab308' },
+  { id: 8, name: 'Papas Fritas', price: 3.20, emoji: '🍟', category: 'Snacks', accent: '#ec4899' },
 ]
 
 const METHODS = [
-  { id: 'mobile',  label: 'Pago Móvil',            sub: 'Transferencia interbancaria', icon: Smartphone, featured: false },
-  { id: 'card',    label: 'Tarjeta Débito',         sub: 'Visa · MC · AMEX',           icon: CreditCard, featured: false },
-  { id: 'facial',  label: 'Reconocimiento Facial',  sub: 'Biometría instantánea',       icon: Scan,       featured: true  },
-  { id: 'cash',    label: 'Efectivo',               sub: 'Pago en caja asistida',       icon: Banknote,   featured: false },
+  { id: 'mobile', label: 'Pago Móvil', sub: 'Transferencia interbancaria', icon: Smartphone, featured: false },
+  { id: 'card', label: 'Tarjeta Débito', sub: 'Visa · MC · AMEX', icon: CreditCard, featured: false },
+  { id: 'facial', label: 'Reconocimiento Facial', sub: 'Biometría instantánea', icon: Scan, featured: true },
+  { id: 'cash', label: 'Efectivo', sub: 'Pago en caja asistida', icon: Banknote, featured: false },
 ]
 
 const IVA = 0.16
@@ -68,18 +68,16 @@ type ModalStep = 'closed' | 'select' | 'facial' | 'success'
 
 export default function App() {
   const [products, setProducts] = useState<Product[]>(INITIAL)
-  const [modal,        setModal]        = useState<ModalStep>('closed')
-  const [selected,     setSelected]     = useState<string | null>(null)
-  const [paidWith,     setPaidWith]     = useState('')
+  const [modal, setModal] = useState<ModalStep>('closed')
+  const [selected, setSelected] = useState<string | null>(null)
+  const [paidWith, setPaidWith] = useState('')
   const [verifiedUser, setVerifiedUser] = useState<BiometricUser | null>(null)
-  const [payRef,       setPayRef]       = useState('')
-  const [confetti,     setConfetti]     = useState(false)
-  const [showScanner,  setShowScanner]  = useState(false)
-  const [showCatalog,  setShowCatalog]  = useState(false)
-  const [showRegisterQR, setShowRegisterQR] = useState(false)
+  const [payRef, setPayRef] = useState('')
+  const [confetti, setConfetti] = useState(false)
+  const [showScanner, setShowScanner] = useState(false)
+  const [showCatalog, setShowCatalog] = useState(false)
   const [mobileTab, setMobileTab] = useState<'shelf' | 'cart'>('shelf')
   const [activeCategory, setActiveCategory] = useState('Todos')
-  const registerUrl = import.meta.env.VITE_REGISTER_URL || 'https://biofacial-81dbf.web.app'
 
   // Ping Railway backend on terminal load to prevent cold-start delay during facial payment
   useEffect(() => {
@@ -89,14 +87,14 @@ export default function App() {
     const t = setTimeout(() => ctrl.abort(), 5000)
     fetch(`${api}/api/health`, { signal: ctrl.signal })
       .then(() => console.log('[BioFacial] Backend pre-calentado (BodeUnerg).'))
-      .catch(() => {}) // silent — failure is fine, just a warm-up
+      .catch(() => { }) // silent — failure is fine, just a warm-up
       .finally(() => clearTimeout(t))
   }, [])
 
   const updateQty = useCallback((id: number, delta: number) => {
     setProducts(prev =>
       prev.map(p => p.id === id ? { ...p, qty: Math.max(0, p.qty + delta) } : p)
-          .filter(p => p.qty > 0)
+        .filter(p => p.qty > 0)
     )
   }, [])
 
@@ -108,15 +106,15 @@ export default function App() {
     })
   }
 
-  const subtotal  = products.reduce((s, p) => s + p.price * p.qty, 0)
-  const iva       = subtotal * IVA
-  const total     = subtotal + iva
+  const subtotal = products.reduce((s, p) => s + p.price * p.qty, 0)
+  const iva = subtotal * IVA
+  const total = subtotal + iva
   const itemCount = products.reduce((s, p) => s + p.qty, 0)
 
-  const openPay  = () => { setSelected(null); setModal('select') }
+  const openPay = () => { setSelected(null); setModal('select') }
   const closeAll = () => { setModal('closed'); setSelected(null) }
 
-  const handleScanned = (product: Omit<Product,'qty'>) => {
+  const handleScanned = (product: Omit<Product, 'qty'>) => {
     handleAddToCart(product)
     setShowScanner(false)
   }
@@ -155,8 +153,8 @@ export default function App() {
     <div className="min-h-screen md:h-screen md:overflow-hidden flex flex-col relative"
       style={{
         background: 'radial-gradient(ellipse at 20% 0%,rgba(37,99,235,0.08) 0%,transparent 55%),'
-                  + 'radial-gradient(ellipse at 85% 100%,rgba(96,165,250,0.07) 0%,transparent 50%),'
-                  + '#f0f4fb',
+          + 'radial-gradient(ellipse at 85% 100%,rgba(96,165,250,0.07) 0%,transparent 50%),'
+          + '#f0f4fb',
       }}>
 
       <ConfettiBlast trigger={confetti} />
@@ -171,7 +169,7 @@ export default function App() {
       <motion.header
         className="surface-strong flex-shrink-0 z-10 sticky top-0"
         style={{ borderBottom: '1px solid rgba(37,99,235,0.08)' }}
-        animate={blurBg ? { filter:'blur(4px)', opacity:0.5 } : { filter:'blur(0)', opacity:1 }}
+        animate={blurBg ? { filter: 'blur(4px)', opacity: 0.5 } : { filter: 'blur(0)', opacity: 1 }}
         transition={{ duration: 0.3 }}
       >
         {/* Mobile header */}
@@ -189,11 +187,6 @@ export default function App() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <motion.button onClick={() => setShowRegisterQR(true)}
-              className="w-9 h-9 flex items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100"
-              whileTap={{ scale: 0.9 }}>
-              <Smartphone size={17} />
-            </motion.button>
             <motion.button onClick={() => setShowScanner(true)}
               className="w-9 h-9 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100"
               whileTap={{ scale: 0.9 }}>
@@ -202,7 +195,7 @@ export default function App() {
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
               style={{ background: '#eff6ff', border: '1px solid #bfdbfe' }}>
               <motion.div className="w-1.5 h-1.5 rounded-full bg-blue-500"
-                animate={{ scale:[1,1.4,1], opacity:[1,0.6,1] }} transition={{ duration:2, repeat:Infinity }} />
+                animate={{ scale: [1, 1.4, 1], opacity: [1, 0.6, 1] }} transition={{ duration: 2, repeat: Infinity }} />
               <Wifi size={10} className="text-blue-600" />
               <span className="text-blue-700 text-[10px] font-semibold">En Línea</span>
             </div>
@@ -225,12 +218,6 @@ export default function App() {
           </div>
           <div className="flex items-center gap-6">
             <div className="flex gap-2">
-              <motion.button onClick={() => setShowRegisterQR(true)}
-                className="px-3 py-1.5 flex items-center gap-1.5 rounded-xl text-xs font-semibold"
-                style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', color: '#047857' }}
-                whileTap={{ scale: 0.95 }}>
-                <Smartphone size={14} /> Registrar Celular
-              </motion.button>
               <motion.button onClick={() => setShowCatalog(true)}
                 className="px-3 py-1.5 flex items-center gap-1.5 rounded-xl bg-white text-gray-600 border border-gray-200 text-xs font-semibold"
                 whileTap={{ scale: 0.95 }}>
@@ -249,7 +236,7 @@ export default function App() {
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full"
               style={{ background: '#eff6ff', border: '1px solid #bfdbfe' }}>
               <motion.div className="w-2 h-2 rounded-full bg-blue-500"
-                animate={{ scale:[1,1.4,1], opacity:[1,0.6,1] }} transition={{ duration:2, repeat:Infinity }} />
+                animate={{ scale: [1, 1.4, 1], opacity: [1, 0.6, 1] }} transition={{ duration: 2, repeat: Infinity }} />
               <Wifi size={12} className="text-blue-600" />
               <span className="text-blue-700 text-xs font-semibold">En Línea</span>
             </div>
@@ -259,7 +246,7 @@ export default function App() {
 
       {/* ── Content ── */}
       <motion.div className="flex-1 flex flex-col md:flex-row md:min-h-0 md:overflow-hidden"
-        animate={blurBg ? { filter:'blur(5px)', scale:0.99, opacity:0.4 } : { filter:'blur(0)', scale:1, opacity:1 }}
+        animate={blurBg ? { filter: 'blur(5px)', scale: 0.99, opacity: 0.4 } : { filter: 'blur(0)', scale: 1, opacity: 1 }}
         transition={{ duration: 0.35 }}>
 
         {/* Mobile Tab Control */}
@@ -267,17 +254,15 @@ export default function App() {
           <div className="flex-1 grid grid-cols-2 p-1 bg-gray-200/40 rounded-xl gap-1" style={{ border: '1px solid rgba(0,0,0,0.05)' }}>
             <button
               onClick={() => setMobileTab('shelf')}
-              className={`py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                mobileTab === 'shelf' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'
-              }`}
+              className={`py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${mobileTab === 'shelf' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'
+                }`}
             >
               <Package size={14} /> Estante
             </button>
             <button
               onClick={() => setMobileTab('cart')}
-              className={`py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 relative ${
-                mobileTab === 'cart' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'
-              }`}
+              className={`py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 relative ${mobileTab === 'cart' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500'
+                }`}
             >
               <ShoppingCart size={14} /> Carrito
               {itemCount > 0 && (
@@ -305,11 +290,10 @@ export default function App() {
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${
-                    activeCategory === cat
-                      ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
-                      : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
-                  }`}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all border ${activeCategory === cat
+                    ? 'bg-blue-600 border-blue-600 text-white shadow-sm'
+                    : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
+                    }`}
                 >
                   {cat}
                 </button>
@@ -432,7 +416,7 @@ export default function App() {
         {modal !== 'closed' && (
           <>
             <motion.div className="fixed inset-0 z-40 modal-backdrop"
-              initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => modal === 'select' && closeAll()} />
 
             <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center md:p-8 pointer-events-none">
@@ -446,10 +430,10 @@ export default function App() {
                   maxHeight: '92vh',
                   overflowY: 'auto',
                 }}
-                initial={{ opacity:0, y:60 }}
-                animate={{ opacity:1, y:0 }}
-                exit={{ opacity:0, y:60 }}
-                transition={{ type:'spring', stiffness:300, damping:28 }}
+                initial={{ opacity: 0, y: 60 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 60 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 28 }}
               >
                 {/* Drag handle (mobile) */}
                 <div className="flex justify-center pt-3 pb-1 md:hidden">
@@ -465,7 +449,7 @@ export default function App() {
                     {/* ── Method selection ── */}
                     {modal === 'select' && (
                       <motion.div key="select"
-                        initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }} transition={{ duration:0.2 }}>
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
 
                         <div className="flex items-start justify-between mb-4">
                           <div>
@@ -477,8 +461,8 @@ export default function App() {
                           </div>
                           <motion.button
                             className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-700 transition-colors"
-                            style={{ background:'#f3f4f6', border:'1px solid #e5e7eb' }}
-                            whileTap={{ scale:0.9 }} onClick={closeAll}>
+                            style={{ background: '#f3f4f6', border: '1px solid #e5e7eb' }}
+                            whileTap={{ scale: 0.9 }} onClick={closeAll}>
                             <X size={15} />
                           </motion.button>
                         </div>
@@ -491,20 +475,20 @@ export default function App() {
                             return (
                               <motion.button key={m.id}
                                 className={`method-tile ${m.featured ? 'featured' : 'normal'} ${isSel ? 'selected' : ''}`}
-                                initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }}
-                                transition={{ duration:0.22, delay:i * 0.05 }}
-                                whileTap={{ scale:0.96 }} onClick={() => setSelected(m.id)}>
+                                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.22, delay: i * 0.05 }}
+                                whileTap={{ scale: 0.96 }} onClick={() => setSelected(m.id)}>
 
                                 {isSel && (
                                   <motion.div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center"
-                                    initial={{ scale:0 }} animate={{ scale:1 }}
-                                    transition={{ type:'spring', stiffness:400, damping:20 }}>
+                                    initial={{ scale: 0 }} animate={{ scale: 1 }}
+                                    transition={{ type: 'spring', stiffness: 400, damping: 20 }}>
                                     <CheckCircle size={12} className="text-white" strokeWidth={2.5} />
                                   </motion.div>
                                 )}
                                 {m.featured && !isSel && (
                                   <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
-                                    style={{ background:'#dbeafe', color:'#1d4ed8' }}>Principal</div>
+                                    style={{ background: '#dbeafe', color: '#1d4ed8' }}>Principal</div>
                                 )}
 
                                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-0.5 transition-all duration-200"
@@ -525,8 +509,8 @@ export default function App() {
                         </div>
 
                         <button className="confirm-btn" disabled={!selected} onClick={confirmMethod}
-                          style={!selected ? { opacity:0.4, cursor:'not-allowed' } : {}}>
-                          {selected === 'facial' ? <><Scan size={16}/> Iniciar Verificación Facial</> : <><CheckCircle size={16}/> Confirmar Pago</>}
+                          style={!selected ? { opacity: 0.4, cursor: 'not-allowed' } : {}}>
+                          {selected === 'facial' ? <><Scan size={16} /> Iniciar Verificación Facial</> : <><CheckCircle size={16} /> Confirmar Pago</>}
                           <ChevronRight size={16} />
                         </button>
                       </motion.div>
@@ -535,11 +519,11 @@ export default function App() {
                     {/* ── Facial camera ── */}
                     {modal === 'facial' && (
                       <motion.div key="facial"
-                        initial={{ opacity:0, x:16 }} animate={{ opacity:1, x:0 }} exit={{ opacity:0, x:16 }} transition={{ duration:0.22 }}>
+                        initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }} transition={{ duration: 0.22 }}>
                         <div className="flex items-center gap-3 mb-4">
-                          <motion.button onClick={() => setModal('select')} whileTap={{ scale:0.9 }}
+                          <motion.button onClick={() => setModal('select')} whileTap={{ scale: 0.9 }}
                             className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400 hover:text-gray-700 transition-colors"
-                            style={{ background:'#f3f4f6', border:'1px solid #e5e7eb' }}>
+                            style={{ background: '#f3f4f6', border: '1px solid #e5e7eb' }}>
                             <ArrowLeft size={15} />
                           </motion.button>
                           <div className="flex-1">
@@ -562,13 +546,13 @@ export default function App() {
                     {/* ── Success ── */}
                     {modal === 'success' && (
                       <motion.div key="success" className="flex flex-col items-center text-center py-4 gap-4"
-                        initial={{ opacity:0, scale:0.85 }} animate={{ opacity:1, scale:1 }}
-                        transition={{ type:'spring', stiffness:260, damping:20 }}>
+                        initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }}
+                        transition={{ type: 'spring', stiffness: 260, damping: 20 }}>
 
                         <motion.div className="w-18 h-18 w-[72px] h-[72px] rounded-full flex items-center justify-center"
-                          style={{ background:'linear-gradient(135deg,#059669,#10b981)', boxShadow:'0 0 32px rgba(16,185,129,0.35)' }}
-                          initial={{ scale:0 }} animate={{ scale:1 }}
-                          transition={{ type:'spring', stiffness:280, damping:18, delay:0.1 }}>
+                          style={{ background: 'linear-gradient(135deg,#059669,#10b981)', boxShadow: '0 0 32px rgba(16,185,129,0.35)' }}
+                          initial={{ scale: 0 }} animate={{ scale: 1 }}
+                          transition={{ type: 'spring', stiffness: 280, damping: 18, delay: 0.1 }}>
                           <CheckCircle size={36} className="text-white" strokeWidth={2} />
                         </motion.div>
 
@@ -583,7 +567,7 @@ export default function App() {
                           )}
                         </div>
 
-                        <div className="w-full rounded-2xl p-4 text-left" style={{ background:'#f8faff', border:'1px solid #e5edff' }}>
+                        <div className="w-full rounded-2xl p-4 text-left" style={{ background: '#f8faff', border: '1px solid #e5edff' }}>
                           <div className="flex justify-between items-center mb-2">
                             <span className="text-gray-400 text-xs uppercase tracking-widest font-medium">Monto</span>
                             <span className="text-gray-900 font-bold text-lg">${total.toFixed(2)}</span>
@@ -605,7 +589,7 @@ export default function App() {
                         </div>
 
                         <motion.p className="text-gray-300 text-xs"
-                          animate={{ opacity:[1,0.4,1] }} transition={{ duration:1.5, repeat:Infinity }}>
+                          animate={{ opacity: [1, 0.4, 1] }} transition={{ duration: 1.5, repeat: Infinity }}>
                           Cerrando automáticamente...
                         </motion.p>
                       </motion.div>
@@ -625,55 +609,6 @@ export default function App() {
       )}
       {showCatalog && (
         <CatalogQR onClose={() => setShowCatalog(false)} />
-      )}
-      {showRegisterQR && (
-        <div className="fixed inset-0 z-50 flex flex-col" style={{ background: '#f0f4fb' }}>
-          {/* Header */}
-          <div className="surface-strong flex items-center justify-between px-4 py-3 flex-shrink-0"
-            style={{ borderBottom: '1px solid rgba(37,99,235,0.08)' }}>
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center"
-                style={{ background: 'linear-gradient(135deg,#10b981,#059669)' }}>
-                <Smartphone size={15} className="text-white" />
-              </div>
-              <div>
-                <p className="text-gray-400 text-[10px] uppercase tracking-widest font-medium">Registro Biométrico</p>
-                <h2 className="font-display font-bold text-base text-gray-900">Registrar Rostro (Celular)</h2>
-              </div>
-            </div>
-            <motion.button onClick={() => setShowRegisterQR(false)} whileTap={{ scale: 0.9 }}
-              className="w-8 h-8 rounded-xl flex items-center justify-center text-gray-400"
-              style={{ background: '#f3f4f6', border: '1px solid #e5e7eb' }}>
-              <X size={15} />
-            </motion.button>
-          </div>
-
-          {/* QR Container */}
-          <div className="flex-1 flex flex-col items-center justify-center px-6 text-center gap-6">
-            <div className="bg-white rounded-3xl p-6 shadow-xl border border-emerald-100/50 flex flex-col items-center gap-2">
-              <QRCodeSVG
-                value={registerUrl}
-                size={220}
-                bgColor="#ffffff"
-                fgColor="#065f46"
-                level="H"
-                includeMargin
-              />
-              <span className="font-mono text-emerald-800 text-xs font-semibold bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
-                {registerUrl}
-              </span>
-            </div>
-
-            <div className="max-w-md flex flex-col gap-2">
-              <h3 className="font-display font-bold text-lg text-gray-950">Escanea para iniciar el KYC</h3>
-              <p className="text-gray-500 text-sm leading-relaxed">
-                1. Asegúrate de que tu celular tenga acceso a Internet (datos móviles o Wi-Fi).<br />
-                2. Escanea este código QR con la cámara de tu celular para abrir el portal de registro en la nube.<br />
-                3. Completa tus datos y realiza la captura biométrica de tu rostro.
-              </p>
-            </div>
-          </div>
-        </div>
       )}
 
       {/* Footer Pragma Studio */}

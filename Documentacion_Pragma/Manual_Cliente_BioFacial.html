@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual Técnico y Operativo (SPCD / BioFacial)</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background-color: #f9fafb;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 3rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        h1 { color: #111827; border-bottom: 2px solid #2563eb; padding-bottom: 0.5rem; }
+        h2 { color: #1d4ed8; margin-top: 2rem; }
+        h3 { color: #3b82f6; }
+        .meta-info {
+            background-color: #eff6ff;
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 4px solid #2563eb;
+            margin-bottom: 2rem;
+        }
+        .math {
+            background-color: #f3f4f6;
+            padding: 1rem;
+            text-align: center;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 1.1rem;
+            margin: 1rem 0;
+        }
+        ul, ol { margin-bottom: 1rem; }
+        li { margin-bottom: 0.5rem; }
+        .footer {
+            margin-top: 3rem;
+            text-align: center;
+            font-size: 0.875rem;
+            color: #6b7280;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Manual Técnico y Operativo (SPCD / BioFacial)</h1>
+        
+        <div class="meta-info">
+            <p><strong>Elaborado por:</strong> PRAGMA STUDIO</p>
+            <p><strong>Para:</strong> Equipo de Proyecto (Líder: Carpio)</p>
+            <p>Este documento contiene la explicación profunda y técnica de cómo opera el módulo biométrico BioFacial dentro del Sistema de Pago y Contratación Digital (SPCD), diseñado para que el equipo pueda defender y exponer el funcionamiento de la plataforma con máxima propiedad técnica.</p>
+        </div>
+
+        <h2>1. Arquitectura Biométrica: ¿Cómo funciona realmente?</h2>
+        <p>El sistema no opera tomando ni guardando fotografías convencionales, lo cual evita problemas de privacidad y de peso en la base de datos. La arquitectura se fundamenta en procesamiento de Inteligencia Artificial (IA) en el "Edge" (es decir, en el navegador del usuario) y una validación matemática en la nube.</p>
+
+        <h3>Proceso de Extracción (Feature Extraction)</h3>
+        <p>Cuando el usuario se registra o intenta pagar, el sistema carga redes neuronales convolucionales (modelos de <em>Deep Learning</em>) utilizando TensorFlow.js en segundo plano. El proceso es:</p>
+        <ol>
+            <li><strong>Detección Facial (<code>tiny_face_detector</code>):</strong> Un modelo ultraligero localiza dónde está el rostro en el recuadro del video.</li>
+            <li><strong>Mapeo Anatómico (<code>face_landmark_68</code>):</strong> Un segundo modelo identifica 68 puntos geométricos clave del rostro (ojos, nariz, mandíbula, etc.).</li>
+            <li><strong>Cálculo Tensorial:</strong> El modelo principal traduce esas facciones físicas en un arreglo matemático exacto compuesto por <strong>128 números de punto flotante</strong> (decimales).</li>
+        </ol>
+        <p>Este arreglo de 128 números se llama <strong>Descriptor Facial</strong>. Es el equivalente biométrico de un "Código Hash" o huella dactilar digital. Es completamente irreversible; no se puede recrear una cara a partir de esos números.</p>
+
+        <h3>El Algoritmo de Verificación Matemática</h3>
+        <p>En la base de datos solo se guardan estos descriptores matemáticos. Al momento de procesar un pago, la cámara extrae los 128 números actuales de la persona y los envía al servidor (Backend).</p>
+        <p>El servidor compara los números enviados desde el punto de venta con los números guardados en la base de datos utilizando una fórmula de cálculo de proximidad llamada <strong>Distancia Euclidiana</strong>:</p>
+        
+        <div class="math">d(p, q) = √ (Σ (p<sub>i</sub> - q<sub>i</sub>)²)</div>
+        
+        <p>El algoritmo cruza cada uno de los 128 números. Si el margen de diferencia geométrica es <strong>menor a 0.45</strong>, el servidor tiene certeza matemática de que es la misma persona y procesa el cobro instantáneamente.</p>
+
+        <h2>2. Niveles de Seguridad (Blindaje)</h2>
+        <p>El ecosistema SPCD ha sido diseñado con una arquitectura segura (Zero-Trust) implementada por Pragma Studio para resistir ataques e inspecciones:</p>
+
+        <h3>2.1 Seguridad de Interfaz (Frontend)</h3>
+        <p>El cliente web está blindado contra manipulación de usuarios y bloqueos de seguridad anti-depuración. Están deshabilitadas las herramientas de desarrollo, el clic derecho y las combinaciones de inspección del navegador para asegurar la integridad de la interfaz durante las operaciones.</p>
+
+        <h3>2.2 Seguridad del Servidor (Railway)</h3>
+        <p>El motor de pagos se ejecuta en un contenedor en la nube. Sus defensas incluyen:</p>
+        <ul>
+            <li><strong>Helmet (Protección de Cabeceras):</strong> Se encriptan y configuran las cabeceras de red para impedir inyecciones de código malicioso (XSS) y Clickjacking.</li>
+            <li><strong>Rate-Limiting (Prevención DDoS):</strong> El servidor cuenta con un cortafuegos activo. Si detecta múltiples peticiones rápidas desde un mismo origen (intentos de forzar pagos o tirar el servidor), bloquea automáticamente la dirección IP del atacante.</li>
+        </ul>
+
+        <h2>3. Flujo de Uso para la Demostración</h2>
+        <p>Durante la exposición, sigan este flujo exacto para demostrar el sistema:</p>
+        <ol>
+            <li><strong>Apertura de la Base de Datos:</strong> Abran la consola de MongoDB en su navegador. Se les ha provisto de un acceso de <strong>Solo Lectura</strong>. Esto permite mostrar al jurado en vivo cómo se registran los usuarios en tiempo real, garantizando que el sistema es auditable pero sin el riesgo de que se elimine o altere la base de datos por error.</li>
+            <li><strong>Registro (BankUnerg):</strong> Ingresen los datos de una persona y realicen el registro biométrico. El sistema guardará su descriptor en la base de datos al instante.</li>
+            <li><strong>Compra (BodeUnerg):</strong> Agreguen productos al carrito de prueba. Procedan al pago seleccionando "Reconocimiento Facial". El sistema leerá el rostro y aprobará el pago en menos de un segundo al validar matemáticamente la identidad.</li>
+        </ol>
+
+        <div class="footer">
+            &copy; 2026 Diseñado y desarrollado por PRAGMA STUDIO. Se reserva el derecho de autor.
+        </div>
+    </div>
+</body>
+</html>

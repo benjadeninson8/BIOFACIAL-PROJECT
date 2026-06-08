@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía Interna de Configuración y Blindaje</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background-color: #f3f4f6;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 3rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border-top: 4px solid #10b981;
+        }
+        h1 { color: #111827; border-bottom: 2px solid #10b981; padding-bottom: 0.5rem; }
+        h2 { color: #047857; margin-top: 2rem; }
+        h3 { color: #059669; }
+        .alert {
+            background-color: #fef2f2;
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 4px solid #ef4444;
+            margin: 1.5rem 0;
+            color: #991b1b;
+        }
+        .code {
+            background-color: #f3f4f6;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+            color: #dc2626;
+        }
+        ul, ol { margin-bottom: 1rem; }
+        li { margin-bottom: 0.5rem; }
+        .footer {
+            margin-top: 3rem;
+            text-align: center;
+            font-size: 0.875rem;
+            color: #6b7280;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Guía Interna de Configuración y Blindaje (Solo para ti)</h1>
+        
+        <p>Esta guía es exclusiva para ti (<strong>Pragma Studio</strong>). Aquí te explico exactamente qué le hicimos al código fuente para blindarlo y cómo debes configurar la base de datos de MongoDB Atlas para entregársela al cliente lista para la exposición.</p>
+
+        <h2>1. Lo que ya está blindado en el código fuente</h2>
+        <p>He modificado el código del proyecto directamente en tu entorno para que el blindaje esté 100% activo:</p>
+        <ol>
+            <li><strong>Anti-Inspección (Frontend):</strong> En <code>BankUnerg/index.html</code> y <code>BodeUnerg/index.html</code> agregué un script invisible que bloquea el clic derecho, bloquea presionar F12 y bloquea las combinaciones de teclas (Ctrl+Shift+I, Ctrl+U). Así el jurado no podrá hurgar el código fuente en vivo.</li>
+            <li><strong>Autoría Intelectual (Frontend):</strong> En los archivos <code>App.tsx</code> de ambos proyectos, incrusté al final tu marca de agua fija: <em>"Diseñado y desarrollado por PRAGMA STUDIO, se reserva el derecho de autor."</em></li>
+            <li><strong>Seguridad del Backend (<code>server.js</code>):</strong>
+                <ul>
+                    <li>Instalé la librería <code>helmet</code> y la habilité como middleware. Esto encripta las cabeceras HTTP cuando se despliega en Railway.</li>
+                    <li>Instalé <code>express-rate-limit</code> y lo configuré para el endpoint <code>/api/</code>. Si alguien hace más de 150 peticiones en 15 minutos, queda bloqueado. Esto previene ataques DDoS o de fuerza bruta.</li>
+                </ul>
+            </li>
+        </ol>
+
+        <h2>2. Configuración de la Base de Datos (LO QUE DEBES HACER TÚ)</h2>
+        <p>Para que el cliente (Carpio y su equipo) pueda abrir la base de datos y mostrar cómo se añaden los descriptores faciales en tiempo real <em>sin</em> que puedan borrar o alterar nada, debes crearles un usuario con permiso estricto de <strong>Solo Lectura</strong> (Read-Only).</p>
+        
+        <p>Sigue estos pasos en tu cuenta de MongoDB Atlas para configurarles el acceso:</p>
+        <ol>
+            <li>Inicia sesión en <strong><a href="https://cloud.mongodb.com/" target="_blank">MongoDB Atlas</a></strong> con tu cuenta de administrador.</li>
+            <li>Asegúrate de estar en el Proyecto/Clúster correcto (donde corre la BD <span class="code">biofacial</span>).</li>
+            <li>En el panel izquierdo, busca la sección de <strong>Security</strong> y haz clic en <strong>Database Access</strong>.</li>
+            <li>Haz clic en el botón verde de la derecha: <strong>ADD NEW DATABASE USER</strong>.</li>
+            <li>Selecciona el método de autenticación por <strong>Password</strong>.</li>
+            <li>En <em>Username</em>, coloca algo como: <span class="code">exposicion_lectura</span> (o el nombre que quieras darles).</li>
+            <li>En <em>Password</em>, genera una contraseña segura (ej: <span class="code">BioFacial_Pragma2026</span>). Copia este usuario y clave en un bloc de notas para dárselo al cliente.</li>
+            <li>En la sección de <strong>Database User Privileges</strong>, abre el menú desplegable y elige el rol: <strong>"Only read any database"</strong> (o "read" en Custom Role).
+                <div class="alert">
+                    <strong>Paso Crítico:</strong> Esto garantiza que puedan hacer consultas y ver los datos en vivo, pero si intentan borrar o modificar un usuario, MongoDB se los prohibirá.
+                </div>
+            </li>
+            <li>Haz clic en <strong>Add User</strong> al final para guardar.</li>
+            <li><em>(Opcional pero recomendado)</em>: Ve a <strong>Network Access</strong> y asegúrate de que la IP desde la que ellos van a exponer esté permitida (o si está en <code>0.0.0.0/0</code>, no hay problema).</li>
+        </ol>
+
+        <h3>¿Qué les entregas a ellos?</h3>
+        <p>Una vez configurado este usuario, les entregas el <strong>manual para el cliente</strong> junto con las credenciales que acabas de crear (<span class="code">exposicion_lectura</span> y su contraseña).</p>
+        <p>Diles que el día de la presentación inicien sesión en la base de datos usando <strong>esas credenciales</strong> y abran la colección <code>users</code> para verla en vivo.</p>
+
+        <div class="footer">
+            PRAGMA STUDIO - Guía Interna
+        </div>
+    </div>
+</body>
+</html>
