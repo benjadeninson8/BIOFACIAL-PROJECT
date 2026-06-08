@@ -137,6 +137,9 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
+// SECURITY: threshold is server-side constant only — never trust client input for this
+const VERIFY_THRESHOLD = 0.45; // face-api.js: < 0.45 = same person (strict), 0.6+ = permissive (insecure)
+
 // Register a new user with face descriptor
 app.post('/api/users/register', async (req, res) => {
   const { id, nombres, apellidos, cedula, descriptor } = req.body;
@@ -156,6 +159,29 @@ app.post('/api/users/register', async (req, res) => {
   }
 
   try {
+    const users = await getUsersList();
+    let bestMatch = null;
+    let minDistance = Infinity;
+
+    for (const user of users) {
+      const dist = getEuclideanDistance(descriptor, user.descriptor);
+      if (dist < minDistance) {
+        minDistance = dist;
+        bestMatch = user;
+      }
+    }
+
+    // Check if the face is already registered
+    if (minDistance < VERIFY_THRESHOLD && bestMatch) {
+      // If the matched face belongs to a different cedula/id, block it!
+      if (bestMatch.cedula !== cedula) {
+        return res.status(409).json({
+          success: false,
+          message: `Violación de Seguridad: Este rostro ya se encuentra registrado a nombre de ${bestMatch.nombres} ${bestMatch.apellidos}.`
+        });
+      }
+    }
+
     const newUser = { id, nombres, apellidos, cedula, descriptor, registeredAt: new Date().toISOString() };
     await saveUser(newUser);
     console.log(`[BioFacial] Usuario registrado/actualizado: ${nombres} ${apellidos} (${cedula})`);
@@ -165,10 +191,6 @@ app.post('/api/users/register', async (req, res) => {
     res.status(500).json({ success: false, message: 'Error al registrar el usuario.' });
   }
 });
-
-// Verify/match face descriptor
-// SECURITY: threshold is server-side constant only — never trust client input for this
-const VERIFY_THRESHOLD = 0.45; // face-api.js: < 0.45 = same person (strict), 0.6+ = permissive (insecure)
 
 app.post('/api/users/verify', async (req, res) => {
   const { descriptor } = req.body;
